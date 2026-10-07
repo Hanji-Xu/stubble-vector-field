@@ -1,0 +1,1301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stubble Field</title>
+<style>
+:root{
+  --paper:#f2eee6; --panel:#fbf9f5; --ink:#2b2621; --muted:#7a7166; --line:#ddd5c8;
+  --wind:#1f6fd1; --muscle:#de5a2b; --accent:#2b2621; --skin:#e9cdb4; --skin-edge:#c9a88c;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);
+  font:13px/1.45 ui-sans-serif,-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif}
+header{display:flex;align-items:baseline;gap:14px;padding:12px 18px 6px}
+header h1{font-size:17px;margin:0;font-weight:600;letter-spacing:.2px}
+header p{margin:0;color:var(--muted)}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:0;height:calc(100% - 44px)}
+.stage-wrap{position:relative;min-height:420px}
+#stage{position:absolute;inset:0;width:100%;height:100%;cursor:pointer}
+#loupe{position:absolute;right:14px;top:14px;width:250px;height:250px;border-radius:50%;
+  border:1px solid var(--line);background:var(--paper);box-shadow:0 2px 14px rgba(0,0,0,.08)}
+.loupe-cap{position:absolute;right:14px;top:268px;width:250px;text-align:center;color:var(--muted);font-size:11px}
+#hud{position:absolute;left:14px;top:10px;font-size:12px;color:var(--ink);pointer-events:none;max-width:calc(100% - 300px)}
+#hud .big{font-size:13px;font-weight:600}
+#hud div{margin-bottom:2px}
+.legend{position:absolute;left:14px;bottom:12px;display:flex;gap:14px;font-size:11px;color:var(--muted);pointer-events:none}
+.legend i{display:inline-block;width:16px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+aside{background:var(--panel);border-left:1px solid var(--line);overflow:auto;padding:4px 16px 30px}
+aside h2{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:16px 0 8px;font-weight:600}
+.presets{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+button{font:inherit;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:6px;padding:6px 8px;cursor:pointer}
+button:hover{border-color:#b9ae9f}
+button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+button.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+textarea,input[type=text],input[type=password],input[type=number],select{font:inherit;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:6px;padding:6px 8px;width:100%}
+textarea{resize:vertical;min-height:54px}
+.row{display:flex;gap:8px;align-items:center;margin-top:8px}
+.row>*{flex:1}
+.status{color:var(--muted);font-size:12px;margin-top:6px;min-height:1em}
+.explain{font-size:12px;background:#f4f0e8;border-radius:6px;padding:8px;margin-top:8px;display:none}
+.ctl{margin:9px 0}
+.ctl label{display:flex;justify-content:space-between;font-size:12px}
+.ctl label span:last-child{color:var(--muted);font-variant-numeric:tabular-nums}
+.ctl input[type=range]{width:100%;margin:3px 0 0;accent-color:var(--ink)}
+.regions{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;margin-top:6px}
+.params{display:grid;grid-template-columns:1fr 92px;gap:4px 8px;align-items:center;font-size:12px}
+.params input,.params select{padding:3px 6px}
+.params .u{color:var(--muted)}
+table.read{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+table.read td{padding:2px 0;border-bottom:1px solid #eee7dc}
+table.read td:last-child{text-align:right}
+details{margin-top:14px}
+details summary{cursor:pointer;font-weight:600}
+.doc{font-size:12px;color:#3d362f}
+.doc code{font-size:11.5px;background:#f1ece3;padding:0 3px;border-radius:3px}
+.doc table{border-collapse:collapse;width:100%;margin:6px 0}
+.doc td,.doc th{border-bottom:1px solid #eee7dc;padding:3px 4px;text-align:left;vertical-align:top}
+.small{font-size:11px;color:var(--muted)}
+@media (max-width:860px){
+  .layout{grid-template-columns:1fr;height:auto}
+  .stage-wrap{height:70vh}
+  #loupe{width:160px;height:160px}.loupe-cap{width:160px;top:178px}
+  aside{border-left:none;border-top:1px solid var(--line)}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Stubble Field</h1>
+  <p>Each hair is a damped cantilever on moving skin. Watch it to read the wind and the jaw.</p>
+</header>
+<div class="layout">
+  <section class="stage-wrap" id="stageWrap">
+    <canvas id="stage"></canvas>
+    <div id="hud"></div>
+    <div class="loupe-cap" id="loupeCap">Close-up of the selected figure. Hairs drawn at true length.</div>
+    <canvas id="loupe"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--ink)"></i>at rest</span>
+      <span><i style="background:var(--wind)"></i>bent by air</span>
+      <span><i style="background:var(--muscle)"></i>carried by moving skin</span>
+    </div>
+  </section>
+
+  <aside>
+    <h2>Condition</h2>
+    <div class="presets" id="presets"></div>
+    <div class="row" style="margin-top:10px">
+      <textarea id="condText" placeholder="Describe a condition, e.g. “arguing on a ferry deck in a crosswind” or “eating jerky in front of a desk fan”"></textarea>
+    </div>
+    <div class="row">
+      <button class="primary" id="interpretBtn">Guess the forces</button>
+    </div>
+    <div class="status" id="llmStatus"></div>
+    <div class="explain" id="explain"></div>
+    <details id="llmBox">
+      <summary>Language model settings</summary>
+      <div class="ctl">
+        <label><span>Anthropic API key</span><span>optional</span></label>
+        <input type="password" id="apiKey" placeholder="sk-ant-…  (blank = local keyword guesser)" autocomplete="off">
+      </div>
+      <div class="ctl">
+        <label><span>Model</span><span></span></label>
+        <input type="text" id="model" value="claude-haiku-4-5">
+      </div>
+      <label class="small"><input type="checkbox" id="rememberKey"> Remember key in this browser</label>
+      <p class="small">The key is sent only to api.anthropic.com, straight from this page. Without a key, a local keyword guesser fills in the same parameters.</p>
+    </details>
+
+    <h2>Forces in play</h2>
+    <div class="params" id="params"></div>
+    <p class="small">These are what the presets and the language model set. Edit any value to drive the field directly.</p>
+
+    <h2>Stubble</h2>
+    <div class="ctl"><label><span>Length</span><span id="vLen"></span></label><input type="range" id="sLen" min="0.3" max="12" step="0.1" value="3"></div>
+    <div class="ctl"><label><span>Area (beard line reach)</span><span id="vCov"></span></label><input type="range" id="sCov" min="0" max="1" step="0.01" value="0.6"></div>
+    <div class="regions" id="regions"></div>
+    <div class="ctl"><label><span>Softness</span><span id="vSoft"></span></label><input type="range" id="sSoft" min="0" max="1" step="0.01" value="0.4"></div>
+    <div class="ctl"><label><span>Density</span><span id="vDen"></span></label><input type="range" id="sDen" min="5" max="100" step="1" value="40"></div>
+
+    <h2>Display</h2>
+    <div class="ctl"><label><span>Bending magnification</span><span id="vMag"></span></label><input type="range" id="sMag" min="0" max="3.5" step="0.01" value="2"></div>
+    <div class="ctl"><label><span>Skin motion magnification</span><span id="vSkin"></span></label><input type="range" id="sSkin" min="1" max="4" step="0.1" value="1"></div>
+    <div class="ctl"><label><span>Hair glyph length (main view)</span><span id="vGlyph"></span></label><input type="range" id="sGlyph" min="1" max="6" step="0.5" value="2.5"></div>
+    <div class="row">
+      <select id="colorMode">
+        <option value="source">Colour: what moves it</option>
+        <option value="bend">Colour: air bending only</option>
+        <option value="skin">Colour: skin motion only</option>
+        <option value="ink">Colour: plain ink</option>
+      </select>
+      <button id="trueBtn">True scale</button>
+      <button id="pauseBtn">Pause</button>
+    </div>
+
+    <h2>Live physics <span class="small" id="readWho"></span></h2>
+    <table class="read" id="readout"></table>
+
+    <details>
+      <summary>How the forces are computed</summary>
+      <div class="doc" id="doc"></div>
+    </details>
+  </aside>
+</div>
+
+<script>
+'use strict';
+/* =====================================================================
+   STUBBLE FIELD
+   Every hair is a rigid rod of length L and diameter D held at its root by
+   a rotational spring (the bending stiffness of the hair shaft), with
+   viscous damping. Its rest direction is fixed to the skin: the local skin
+   normal tilted toward the beard "grain". The skin itself is a deforming
+   surface driven by a jaw model (mandible rotation about the TMJ, condylar
+   glide, lateral shift, masseter bulge, lip motion). Air loads come from a
+   potential-flow + boundary-layer + canopy model of wind over the head with
+   synthetic Kolmogorov turbulence and travelling (1-cos) gusts.
+   All quantities are SI unless a name says otherwise.
+   ===================================================================== */
+
+// ---------- physical constants (documented in the "How" panel) ----------
+const PHYS = {
+  RHO_AIR: 1.20,        // kg/m^3, air at ~20 C
+  NU_AIR: 1.5e-5,       // m^2/s, kinematic viscosity of air
+  RHO_HAIR: 1300,       // kg/m^3, keratin
+  G: 9.81,
+  D_HAIR: 100e-6,       // m, mean beard-hair diameter (beard hair ~80-150 um)
+  ZETA: 0.25,           // damping ratio of the follicle/shaft (estimate)
+  E_STIFF: 6.0e9,       // Pa, softness 0 (dry, coarse keratin)
+  E_SOFT: 0.5e9,        // Pa, softness 1 (wet hair + compliant follicle)
+  WET_E_DROP: 0.45,     // fractional modulus loss when fully wet
+  KAPPA_COEF: 3,        // kappa = 3 E I / L  (tip-load cantilever equivalence)
+  GRAIN_DEG: 55,        // rest angle of the hair away from the skin normal
+  PILO_DEG: 20,         // max reduction of that angle by arrector pili
+  CONDYLE_MM_PER_DEG: 0.4, // forward glide of the condyle per degree of opening
+  MASSETER_SIGMA: 0.014,   // m, spatial extent of the masseter bulge
+  HEAD_R: 0.09,         // m, radius used for boundary-layer development
+  SEP_DEG: 100,         // flow separation angle from stagnation (sphere, subcritical)
+  WAKE_FRACTION: 0.30,  // mean outer-flow speed left in the separated wake
+  WAKE_BUFFET: 0.25,    // fluctuating wake speed, fraction of U
+  STROUHAL: 0.20,
+  BEND_CLAMP: 1.3       // rad, small-angle model is not trusted past this
+};
+const DT = 1/60;                // fixed physics step (s)
+const HEAD = {a:0.072, b:0.112, c:0.096};       // half-width, half-height, half-depth (m)
+const NECK = {rx:0.047, rz:0.053, zc:-0.020, yTop:-0.07, yBot:-0.18};
+const PIVOT = {y:-0.010, z:0.010};              // TMJ rotation axis (parallel to x)
+const MAX_HAIRS_PER_FIG = 14000;
+
+function hyp(a,b,c=0){return Math.sqrt(a*a+b*b+c*c);}
+const clamp=(x,a,b)=>x<a?a:x>b?b:x;
+const smooth=(e0,e1,x)=>{const t=clamp((x-e0)/(e1-e0),0,1);return t*t*(3-2*t);};
+const lerp=(a,b,t)=>a+(b-a)*t;
+const D2R=Math.PI/180, R2D=180/Math.PI;
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+function gauss(r){let u=0;while(u===0)u=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*r());}
+
+// ---------- condition schema (shared by presets, editor, LLM, fallback) ----------
+const PARAM_DEFS = [
+  {k:'wind_speed_ms', label:'Wind speed', unit:'m/s', min:0, max:35, step:0.1},
+  {k:'wind_from_deg', label:'Wind from', unit:'°', min:0, max:359, step:1, hint:'0 left, 90 front (into faces), 180 right, 270 behind'},
+  {k:'turbulence_intensity', label:'Turbulence', unit:'σ/U', min:0, max:0.6, step:0.01},
+  {k:'gust_factor', label:'Gust peak', unit:'×U', min:1, max:3, step:0.05},
+  {k:'gust_interval_s', label:'Gust every', unit:'s', min:2, max:120, step:0.5},
+  {k:'jaw_mode', label:'Jaw', unit:'', options:['rest','chew','talk','chatter','clench','yawn']},
+  {k:'jaw_rate_hz', label:'Jaw rate', unit:'Hz', min:0, max:12, step:0.05},
+  {k:'jaw_open_mm', label:'Jaw opening', unit:'mm', min:0, max:55, step:0.5},
+  {k:'jaw_lateral_mm', label:'Side-to-side', unit:'mm', min:0, max:10, step:0.1},
+  {k:'masseter_bulge_mm', label:'Masseter bulge', unit:'mm', min:0, max:3.5, step:0.05},
+  {k:'lip_motion', label:'Lip motion', unit:'0–1', min:0, max:1, step:0.01},
+  {k:'piloerection', label:'Goosebumps', unit:'0–1', min:0, max:1, step:0.01},
+  {k:'wetness', label:'Wetness', unit:'0–1', min:0, max:1, step:0.01}
+];
+const BASE = {wind_speed_ms:0.15,wind_from_deg:0,turbulence_intensity:0.5,gust_factor:1,gust_interval_s:30,
+  jaw_mode:'rest',jaw_rate_hz:0,jaw_open_mm:2.5,jaw_lateral_mm:0,masseter_bulge_mm:0,lip_motion:0,piloerection:0,wetness:0};
+const P=(o)=>Object.assign({},BASE,o);
+const PRESETS = {
+  calm:   {label:'Calm',      p:P({}), why:'Still indoor air (about 0.15 m/s of drafts). Jaw at rest with the usual 2–3 mm gap between the teeth.'},
+  breeze: {label:'Breeze',    p:P({wind_speed_ms:4.5,wind_from_deg:20,turbulence_intensity:0.2,gust_factor:1.3,gust_interval_s:8}), why:'Gentle breeze (Beaufort 3) from the left, slightly in front.'},
+  gusty:  {label:'Gusts',     p:P({wind_speed_ms:6,wind_from_deg:0,turbulence_intensity:0.3,gust_factor:2.3,gust_interval_s:5}), why:'Moderate wind from the left with strong gusts that peak at 2.3× the mean.'},
+  storm:  {label:'Storm',     p:P({wind_speed_ms:18,wind_from_deg:10,turbulence_intensity:0.35,gust_factor:1.7,gust_interval_s:4}), why:'Gale force (Beaufort 8) with heavy turbulence.'},
+  cycling:{label:'Cycling',   p:P({wind_speed_ms:7,wind_from_deg:90,turbulence_intensity:0.12,gust_factor:1.15,gust_interval_s:10}), why:'Riding at about 25 km/h: a steady headwind straight into the face.'},
+  chewing:{label:'Chewing',   p:P({jaw_mode:'chew',jaw_rate_hz:1.4,jaw_open_mm:14,jaw_lateral_mm:4,masseter_bulge_mm:1.8,lip_motion:0.2}), why:'Chewing gum at about 1.4 strokes per second. The masseter bulges on each power stroke.'},
+  steak:  {label:'Tough food',p:P({jaw_mode:'chew',jaw_rate_hz:1.15,jaw_open_mm:20,jaw_lateral_mm:5,masseter_bulge_mm:2.6,lip_motion:0.25}), why:'Chewing something tough: slower, wider strokes and a hard masseter contraction.'},
+  talking:{label:'Talking',   p:P({jaw_mode:'talk',jaw_rate_hz:4.5,jaw_open_mm:9,jaw_lateral_mm:0.5,masseter_bulge_mm:0.3,lip_motion:0.8}), why:'Conversational speech at about 4.5 syllables per second.'},
+  shiver: {label:'Shivering', p:P({wind_speed_ms:2.5,wind_from_deg:30,turbulence_intensity:0.3,gust_factor:1.4,gust_interval_s:6,jaw_mode:'chatter',jaw_rate_hz:8,jaw_open_mm:2.5,jaw_lateral_mm:0.4,masseter_bulge_mm:1.0,piloerection:0.8}), why:'Cold air, teeth chattering at about 8 Hz, goosebumps raising the hairs.'},
+  yawn:   {label:'Yawning',   p:P({jaw_mode:'yawn',jaw_rate_hz:0.12,jaw_open_mm:45,lip_motion:0.6}), why:'A slow, full yawn every eight seconds or so.'},
+  clench: {label:'Clenching', p:P({jaw_mode:'clench',jaw_rate_hz:0,jaw_open_mm:0,masseter_bulge_mm:2.2}), why:'Teeth clenched under stress. Only the masseter bulge and its tremor move the skin.'},
+  pier:   {label:'Windy chat',p:P({wind_speed_ms:8,wind_from_deg:0,turbulence_intensity:0.25,gust_factor:1.6,gust_interval_s:6,jaw_mode:'talk',jaw_rate_hz:4.2,jaw_open_mm:10,jaw_lateral_mm:0.5,masseter_bulge_mm:0.4,lip_motion:0.8}), why:'Talking on a windy pier. Both forces at once.'}
+};
+
+// ---------- state ----------
+const stubble = {lengthMM:3, coverage:0.6, softness:0.4, density:40,
+  regions:{moustache:true, chin:true, cheeks:true, jaw:true, neck:true}};
+const display = {mag:100, skinGain:1, glyph:2.5, color:'source', paused:false};
+let cond = Object.assign({}, PRESETS.calm.p);
+let activePreset = 'calm';
+let simT = 0;
+
+// =====================================================================
+// GEOMETRY
+// =====================================================================
+// Head: an egg-shaped ellipsoid with a tapered jaw and projecting chin.
+// Parameters: th = azimuth (0 = straight ahead, + toward local +x),
+//             ph = elevation (-90 deg = under the chin).
+// Local frame: x lateral, y up, z forward (nose direction), origin = head centre.
+function headNeutral(th, ph, o, k){
+  const cp=Math.cos(ph), sp=Math.sin(ph), st=Math.sin(th), ct=Math.cos(th);
+  const y=HEAD.b*sp, t=sp<0?-sp:0;
+  o[k]=HEAD.a*cp*st*(1-0.2*t*t);
+  o[k+1]=y;
+  let z=HEAD.c*cp*ct; if(ct>0) z*=1+0.22*t*ct;
+  o[k+2]=z;
+}
+// Neck: elliptic cylinder; parameters th (azimuth) and y.
+function neckNeutral(th, y, o, k){
+  o[k]=NECK.rx*Math.sin(th); o[k+1]=y; o[k+2]=NECK.zc+NECK.rz*Math.cos(th);
+}
+function insideHead(x,y,z){ // conservative test against the neutral head
+  const t=y<0?Math.min(1,-y/HEAD.b):0;
+  const ax=HEAD.a*(1-0.2*t*t), cz=HEAD.c*(z>0?1+0.22*t:1);
+  return (x*x)/(ax*ax)+(y*y)/(HEAD.b*HEAD.b)+(z*z)/(cz*cz) < 0.96;
+}
+
+// Mouth and masseter anchor points (neutral, local)
+const tmpV = new Float64Array(3);
+headNeutral(0, -31*D2R, tmpV, 0);
+const MOUTH = [0, tmpV[1], tmpV[2]];
+const ARM = hyp(MOUTH[1]-PIVOT.y, MOUTH[2]-PIVOT.z);   // TMJ -> incisors (m)
+headNeutral( 72*D2R, -30*D2R, tmpV, 0); const MASS_P=[tmpV[0],tmpV[1],tmpV[2]];
+headNeutral(-72*D2R, -30*D2R, tmpV, 0); const MASS_N=[tmpV[0],tmpV[1],tmpV[2]];
+
+// Skin attachment weights for a neutral skin point.
+//   wM   : how much the skin follows the mandible (0..0.92)
+//   mP,mN: masseter bulge shape (+x side, -x side)
+//   lip  : lip region weight
+function skinWeights(x,y,z,isNeck,out){
+  let wM;
+  if(!isNeck){
+    // Lower border of the maxilla/cheek: runs from the TMJ down to the mouth line.
+    // (the line passes between the lips at the front)
+    const yTop = -0.012 + (MOUTH[1]+0.012)/MOUTH[2]*Math.max(z,0);
+    const width = 0.004 + 0.03*(1-smooth(0.03,0.075,z)); // lips split sharply; cheek skin shears over a wide band
+    wM = smooth(yTop+0.001, yTop-width, y) * smooth(-0.03,0.0,z);
+  } else {
+    wM = 0.35*smooth(-0.14,-0.10,y)*smooth(-0.01,0.03,z);
+  }
+  out[0]=0.92*wM;
+  const s2=2*PHYS.MASSETER_SIGMA*PHYS.MASSETER_SIGMA;
+  out[1]=isNeck?0:Math.exp(-((x-MASS_P[0])**2+(y-MASS_P[1])**2+(z-MASS_P[2])**2)/s2);
+  out[2]=isNeck?0:Math.exp(-((x-MASS_N[0])**2+(y-MASS_N[1])**2+(z-MASS_N[2])**2)/s2);
+  const r2=(x-MOUTH[0])**2+(y-MOUTH[1])**2+(z-MOUTH[2])**2;
+  out[3]=(!isNeck && z>0.04)?Math.exp(-r2/(2*0.016*0.016)):0;
+}
+
+// Deform one neutral skin point (p, neutral normal n, weights w) by jaw state J.
+// Writes the deformed local position to o[k..k+2].
+function deformPoint(px,py,pz,nx,ny,nz,wM,mP,mN,lip,J,o,k){
+  // 1. masseter bulge along the skin normal
+  const b = J.bulgeP*mP + J.bulgeN*mN;
+  px+=nx*b; py+=ny*b; pz+=nz*b;
+  // 2. lips: spread/round (x) and protrusion (z)
+  if(lip>1e-4){ px+=J.spread*0.004*(px/0.025)*lip; pz+=J.pucker*0.004*lip; }
+  // 3. mandible: rotation about the TMJ axis + condylar glide + lateral shift
+  if(wM>1e-4){
+    const dy=py-PIVOT.y, dz=pz-PIVOT.z;
+    const ry=PIVOT.y + dy*J.cb - dz*J.sb + J.ty;
+    const rz=PIVOT.z + dy*J.sb + dz*J.cb + J.tz;
+    const rx=px + J.tx;
+    px+=wM*(rx-px); py+=wM*(ry-py); pz+=wM*(rz-pz);
+  }
+  o[k]=px; o[k+1]=py; o[k+2]=pz;
+}
+
+// ---------- surface grids ----------
+function makeGrid(kind, nu, nv, u0,u1, v0,v1){
+  const n=nu*nv, g={kind, nu, nv, u0,u1,v0,v1, du:(u1-u0)/(nu-1), dv:(v1-v0)/(nv-1), n,
+    pN:new Float64Array(n*3), nN:new Float64Array(n*3), w:new Float64Array(n*4),
+    lp:new Float64Array(n*3), ln:new Float64Array(n*3), lTu:new Float64Array(n*3), lTv:new Float64Array(n*3)};
+  const f = kind==='neck'?neckNeutral:headNeutral;
+  const a=new Float64Array(3), b=new Float64Array(3), c=new Float64Array(3), d=new Float64Array(3), ww=new Float64Array(4);
+  for(let j=0;j<nv;j++)for(let i=0;i<nu;i++){
+    const k=j*nu+i, u=u0+i*g.du, v=v0+j*g.dv;
+    f(u,v,g.pN,k*3);
+    const h=1e-4; f(u+h,v,a,0); f(u-h,v,b,0); f(u,v+h,c,0); f(u,v-h,d,0);
+    const tux=a[0]-b[0],tuy=a[1]-b[1],tuz=a[2]-b[2], tvx=c[0]-d[0],tvy=c[1]-d[1],tvz=c[2]-d[2];
+    let nx=tuy*tvz-tuz*tvy, ny=tuz*tvx-tux*tvz, nz=tux*tvy-tuy*tvx;
+    let L=hyp(nx,ny,nz);
+    if(L<1e-12){ // pole: use radial direction
+      nx=g.pN[k*3]; ny=g.pN[k*3+1]; nz=g.pN[k*3+2]; L=hyp(nx,ny,nz)||1;
+    }
+    g.nN[k*3]=nx/L; g.nN[k*3+1]=ny/L; g.nN[k*3+2]=nz/L;
+    skinWeights(g.pN[k*3],g.pN[k*3+1],g.pN[k*3+2],kind==='neck',ww);
+    g.w[k*4]=ww[0]; g.w[k*4+1]=ww[1]; g.w[k*4+2]=ww[2]; g.w[k*4+3]=ww[3];
+  }
+  return g;
+}
+const HEAD_GRID_SPEC = ['head', 66, 44, -118*D2R, 118*D2R, -88*D2R, 22*D2R];
+const NECK_GRID_SPEC = ['neck', 48, 22, -Math.PI, Math.PI, NECK.yBot, NECK.yTop];
+const FULL_GRID_SPEC = ['head', 30, 18, -Math.PI, Math.PI, -89*D2R, 89*D2R];
+
+// Deform a whole grid and recompute tangents + normals by central differences.
+function deformGrid(g, J){
+  const {nu,nv,pN,nN,w,lp,ln,lTu,lTv}=g;
+  for(let k=0;k<g.n;k++){
+    deformPoint(pN[k*3],pN[k*3+1],pN[k*3+2],nN[k*3],nN[k*3+1],nN[k*3+2],
+      w[k*4],w[k*4+1],w[k*4+2],w[k*4+3],J,lp,k*3);
+  }
+  const wrapU = g.kind==='neck';
+  for(let j=0;j<nv;j++)for(let i=0;i<nu;i++){
+    const k=j*nu+i;
+    let i0=i-1,i1=i+1, j0=j-1,j1=j+1;
+    if(wrapU){ if(i0<0)i0=nu-2; if(i1>nu-1)i1=1; } else { if(i0<0)i0=0; if(i1>nu-1)i1=nu-1; }
+    if(j0<0)j0=0; if(j1>nv-1)j1=nv-1;
+    const ka=(j*nu+i1)*3, kb=(j*nu+i0)*3, kc=(j1*nu+i)*3, kd=(j0*nu+i)*3;
+    const su=1/((wrapU?2:(i1-i0))*g.du), sv=1/((j1-j0)*g.dv);
+    const tux=(lp[ka]-lp[kb])*su, tuy=(lp[ka+1]-lp[kb+1])*su, tuz=(lp[ka+2]-lp[kb+2])*su;
+    const tvx=(lp[kc]-lp[kd])*sv, tvy=(lp[kc+1]-lp[kd+1])*sv, tvz=(lp[kc+2]-lp[kd+2])*sv;
+    lTu[k*3]=tux; lTu[k*3+1]=tuy; lTu[k*3+2]=tuz;
+    lTv[k*3]=tvx; lTv[k*3+1]=tvy; lTv[k*3+2]=tvz;
+    let nx=tuy*tvz-tuz*tvy, ny=tuz*tvx-tux*tvz, nz=tux*tvy-tuy*tvx;
+    const L=hyp(nx,ny,nz);
+    if(L<1e-12){ nx=nN[k*3];ny=nN[k*3+1];nz=nN[k*3+2]; } else { nx/=L;ny/=L;nz/=L; }
+    ln[k*3]=nx; ln[k*3+1]=ny; ln[k*3+2]=nz;
+  }
+}
+
+// =====================================================================
+// JAW KINEMATICS  (per figure; returns a J object used by deformPoint)
+// =====================================================================
+function jawDrive(F, t, dt, c){
+  const rate=c.jaw_rate_hz*F.rateJ, A=c.jaw_open_mm*F.ampJ, Lat=c.jaw_lateral_mm;
+  let open=0, lat=0, actP=0, actN=0, spread=0, pucker=0;
+  const S=F.talk;
+  switch(c.jaw_mode){
+    case 'rest': open=A; break;
+    case 'chew': { // gape cycle: opening 38%, closing 37%, occlusal (power) 25%
+      const cyc=t*rate+F.phase, ph=cyc-Math.floor(cyc);
+      let o; if(ph<0.38) o=Math.sin(Math.PI/2*ph/0.38)**2;
+      else if(ph<0.75) o=Math.cos(Math.PI/2*(ph-0.38)/0.37)**2; else o=0;
+      open=A*o;
+      const side=(Math.floor(cyc/10)%2)?1:-1;           // swap chewing side every ~10 strokes
+      lat=side*Lat*Math.sin(Math.PI*clamp((ph-0.25)/0.6,0,1)); // teardrop: shift toward working side while closing
+      const e=Math.exp(-(((ph-0.80)/0.12)**2));          // masseter fires on the power stroke
+      actP=side>0?e:0.6*e; actN=side>0?0.6*e:e;
+      spread=0.15*o*c.lip_motion; break; }
+    case 'talk': {
+      if(t>=S.next){
+        const r=F.rng;
+        if(r()<0.10){ S.target=0; S.next=t+0.25+0.35*r(); }           // phrase pause
+        else {
+          S.target = r()<0.72 ? A*(0.25+0.75*r()) : A*0.05*r();      // vowel vs closure
+          S.spreadT = (r()*2-1);
+          S.next = t + 1/Math.max(0.5,rate*(0.7+0.6*r()));
+        }
+      }
+      const a=1-Math.exp(-dt*28);                    // ~ 6 Hz articulator bandwidth (two-stage)
+      S.v1+= (S.target-S.v1)*a; S.val+=(S.v1-S.val)*a;
+      S.s1+= (S.spreadT-S.s1)*a; S.spread+=(S.s1-S.spread)*a;
+      open=S.val; spread=S.spread*c.lip_motion; pucker=-0.6*S.spread*c.lip_motion;
+      actP=actN=0.25*(S.val/Math.max(A,1e-6)); break; }
+    case 'chatter': {
+      const ph=2*Math.PI*(rate*t+F.phase);
+      const o=0.5+0.5*Math.sin(ph);
+      open=A*o; lat=Lat*Math.sin(ph*0.5);
+      actP=actN=1-o; break; }
+    case 'clench': {
+      const tr=0.85+0.08*Math.sin(2*Math.PI*9.5*t+F.phase*6)+0.05*Math.sin(2*Math.PI*11.7*t+F.phase*3); // physiological tremor 8-12 Hz
+      actP=tr; actN=tr*0.95; open=0; break; }
+    case 'yawn': {
+      const cyc=t*Math.max(rate,0.03)+F.phase, ph=cyc-Math.floor(cyc);
+      const env = ph<0.35 ? smooth(0,0.35,ph) : ph<0.55 ? 1 : ph<0.8 ? 1-smooth(0.55,0.8,ph) : 0;
+      open=A*env; spread=0.7*env*c.lip_motion; pucker=-0.3*env*c.lip_motion; break; }
+  }
+  const beta=Math.asin(clamp(open/1000/ARM,0,0.9));
+  const deg=beta*R2D;
+  return {open, lat, beta,
+    cb:Math.cos(beta), sb:Math.sin(beta),
+    tz:PHYS.CONDYLE_MM_PER_DEG*Math.max(0,deg-5)/1000, ty:-0.15*PHYS.CONDYLE_MM_PER_DEG*Math.max(0,deg-5)/1000, tx:lat/1000,
+    bulgeP:c.masseter_bulge_mm/1000*actP, bulgeN:c.masseter_bulge_mm/1000*actN,
+    spread, pucker, actP, actN};
+}
+
+// =====================================================================
+// WIND FIELD  (world frame: x right, y up, z toward the viewer)
+// =====================================================================
+const wind = {U:0, ex:1, ez:0, Uc:0.3, modes:[], gusts:[], nextGust:0, rng:mulberry32(7)};
+function rebuildWind(){
+  const U=cond.wind_speed_ms, th=cond.wind_from_deg*D2R;
+  wind.U=U; wind.ex=Math.cos(th); wind.ez=-Math.sin(th);   // direction the air moves toward
+  wind.Uc=Math.max(U,0.3);
+  // Synthetic turbulence: 10 frozen modes, log-spaced wavelengths 0.25-20 m,
+  // amplitudes following the Kolmogorov -5/3 energy spectrum, convected at Uc
+  // (Taylor's hypothesis). Component rms ratio u:v:w = 1 : 0.8 : 0.5.
+  const r=mulberry32(1234), N=10, sig=cond.turbulence_intensity*Math.max(U,0.15);
+  const lx=-wind.ez, lz=wind.ex; // lateral direction
+  const modes=[]; let var_=0;
+  for(let m=0;m<N;m++){
+    const lam=20*Math.pow(0.25/20, m/(N-1)), k=2*Math.PI/lam;
+    const ang=(r()*2-1)*40*D2R, ca=Math.cos(ang), sa=Math.sin(ang);
+    const kx=k*(wind.ex*ca+lx*sa), kz=k*(wind.ez*ca+lz*sa), ky=k*0.3*(r()*2-1);
+    const amp=Math.pow(k,-1/3);
+    const cu=gauss(r), cv=0.8*gauss(r), cw=0.5*gauss(r);
+    const ax=amp*(cu*wind.ex+cv*lx), ay=amp*cw, az=amp*(cu*wind.ez+cv*lz);
+    modes.push({kx,ky,kz,ph:r()*2*Math.PI,ax,ay,az}); var_+= (cu*cu+cv*cv+cw*cw)*amp*amp/2;
+  }
+  // scale so the three components carry sigma^2 * (1 + 0.8^2 + 0.5^2)
+  const target = sig*sig*(1+0.64+0.25);
+  const s = var_>0?Math.sqrt(target/var_):0;
+  for(const md of modes){md.ax*=s;md.ay*=s;md.az*=s;}
+  wind.modes=modes;
+  wind.gusts=wind.gusts.filter(g=>simT-g.t0<g.Td+5);
+  wind.nextGust=Math.min(wind.nextGust||0, simT+1);
+}
+function updateGusts(t){
+  if(cond.gust_factor<=1.01 || cond.wind_speed_ms<0.5) return;
+  if(t>=wind.nextGust){
+    const Td=1.5+1.5*wind.rng();
+    wind.gusts.push({t0:t, Td, amp:(cond.gust_factor-1)*cond.wind_speed_ms*(0.7+0.3*wind.rng())});
+    wind.nextGust = t + cond.gust_interval_s*(-Math.log(1-0.999*wind.rng()))*0.8 + 0.2*cond.gust_interval_s;
+  }
+  wind.gusts=wind.gusts.filter(g=>t-g.t0<g.Td+3);
+}
+// Air velocity at world point (x,y,z), time t -> o[0..2]
+function airAt(x,y,z,t,o){
+  let ux=wind.U*wind.ex, uy=0, uz=wind.U*wind.ez;
+  const cx=wind.ex*wind.Uc*t, cz=wind.ez*wind.Uc*t;
+  for(let m=0;m<wind.modes.length;m++){
+    const md=wind.modes[m];
+    const s=Math.sin(md.kx*(x-cx)+md.ky*y+md.kz*(z-cz)+md.ph);
+    ux+=md.ax*s; uy+=md.ay*s; uz+=md.az*s;
+  }
+  const along=x*wind.ex+z*wind.ez;
+  for(let i=0;i<wind.gusts.length;i++){
+    const g=wind.gusts[i], tl=t-g.t0-along/wind.Uc;
+    if(tl>0&&tl<g.Td){ const v=g.amp*0.5*(1-Math.cos(2*Math.PI*tl/g.Td)); ux+=v*wind.ex; uz+=v*wind.ez; }
+  }
+  o[0]=ux;o[1]=uy;o[2]=uz;
+}
+function gustNow(t){ // for HUD: gust speed at stage centre
+  let v=0; for(const g of wind.gusts){const tl=t-g.t0; if(tl>0&&tl<g.Td) v=Math.max(v,g.amp*0.5*(1-Math.cos(2*Math.PI*tl/g.Td)));} return v;
+}
+
+// =====================================================================
+// FIGURES AND HAIRS
+// =====================================================================
+const FIG_DEFS = [
+  {x:-0.52, yaw:-38, shirt:'#7d8e7a', seed:11, s:1.00},
+  {x: 0.00, yaw:  8, shirt:'#b37a5b', seed:23, s:1.04},
+  {x: 0.52, yaw: 46, shirt:'#5c6f8f', seed:37, s:0.97}
+];
+const HEAD_Y = 0.57;  // head centre height above ground (stylised small bodies)
+let figures=[];
+let selected=1;
+
+function regionAt(x,y,z,isNeck){
+  // returns [weight, regionName]
+  const cov=stubble.coverage, R=stubble.regions;
+  if(isNeck){
+    if(!R.neck || insideHead(x,y,z)) return [0,'neck'];
+    const yN=-0.115-0.05*cov;
+    return [smooth(yN-0.008,yN+0.008,y)*smooth(-0.03,0.012,z),'neck'];
+  }
+  const ax=Math.abs(x);
+  if(z>0.045 && ax<0.027 && y>-0.0650 && y<-0.0515) return [0,'lips'];
+  if(z<-0.012) return [0,'none'];
+  let reg;
+  if(z>0.05 && ax<0.034 && y>-0.0515 && y<-0.028) reg='moustache';
+  else if(ax<0.034 && y<-0.064 && z>0.025) reg='chin';
+  else if(y>-0.062) reg='cheeks';
+  else reg='jaw';
+  if(!R[reg]) return [0,reg];
+  let w=1;
+  if(reg==='moustache'){
+    w=smooth(-0.031,-0.036,y)*smooth(0.034,0.028,ax);          // stops under the nose
+  } else {
+    const side=1-smooth(0.0,0.05,z);
+    const yTop=lerp(-0.050+0.030*cov, -0.022+0.045*cov, side);  // cheek line -> sideburn
+    w=smooth(yTop+0.005,yTop-0.005,y)*smooth(-0.016,-0.008,z);
+    if(reg==='cheeks') w*=0.35+0.65*cov;                        // cheeks fill in last
+  }
+  return [w,reg];
+}
+
+function makeFigure(def, idx){
+  const F={def, idx, x:def.x, scale:def.s, yawBase:def.yaw*D2R, yaw:def.yaw*D2R, phase:(def.seed%10)/10,
+    rateJ:0.94+0.012*(def.seed%10), ampJ:0.92+0.015*(def.seed%10), rng:mulberry32(def.seed*77),
+    talk:{next:0,target:0,v1:0,val:0,spreadT:0,s1:0,spread:0}};
+  F.grids=[makeGrid(...HEAD_GRID_SPEC), makeGrid(...NECK_GRID_SPEC)];
+  F.full=makeGrid(...FULL_GRID_SPEC);
+  for(const g of F.grids){ g.wp=new Float64Array(g.n*3); g.wn=new Float64Array(g.n*3); g.wTu=new Float64Array(g.n*3); g.wTv=new Float64Array(g.n*3);
+    g.ue=new Float64Array(g.n*3); g.del=new Float64Array(g.n); g.wpN=new Float64Array(g.n*3); }
+  F.full.wp=new Float64Array(F.full.n*3);
+  seedHairs(F);
+  return F;
+}
+
+function seedHairs(F){
+  const rng=mulberry32(F.def.seed*1000+7);
+  const dens=stubble.density*1e4; // per m^2
+  const list=[];
+  const pa=new Float64Array(3);
+  const cells=[];
+  for(let gi=0;gi<2;gi++){
+    const g=F.grids[gi], isNeck=gi===1;
+    for(let j=0;j<g.nv-1;j++)for(let i=0;i<g.nu-1;i++){
+      const k=j*g.nu+i, k1=k+1, k2=k+g.nu;
+      const ux=g.pN[k1*3]-g.pN[k*3], uy=g.pN[k1*3+1]-g.pN[k*3+1], uz=g.pN[k1*3+2]-g.pN[k*3+2];
+      const vx=g.pN[k2*3]-g.pN[k*3], vy=g.pN[k2*3+1]-g.pN[k*3+1], vz=g.pN[k2*3+2]-g.pN[k*3+2];
+      const area=hyp(uy*vz-uz*vy, uz*vx-ux*vz, ux*vy-uy*vx)*F.scale*F.scale;
+      cells.push([gi,i,j,area]);
+    }
+  }
+  for(const [gi,i,j,ar] of cells){
+    const g=F.grids[gi], isNeck=gi===1;
+    const lam=ar*dens; let n=Math.floor(lam); if(rng()<lam-n) n++;
+    for(let h=0;h<n;h++){
+      const fu=rng(), fv=rng();
+      const k00=j*g.nu+i, k10=k00+1, k01=k00+g.nu, k11=k01+1;
+      const w00=(1-fu)*(1-fv), w10=fu*(1-fv), w01=(1-fu)*fv, w11=fu*fv;
+      for(let c=0;c<3;c++) pa[c]=w00*g.pN[k00*3+c]+w10*g.pN[k10*3+c]+w01*g.pN[k01*3+c]+w11*g.pN[k11*3+c];
+      const [wt,reg]=regionAt(pa[0],pa[1],pa[2],isNeck);
+      if(wt<=0 || rng()>wt) continue;
+      // neutral normal + tangents at the hair
+      let nx=0,ny=0,nz=0; for(const [kk,ww] of [[k00,w00],[k10,w10],[k01,w01],[k11,w11]]){nx+=ww*g.nN[kk*3];ny+=ww*g.nN[kk*3+1];nz+=ww*g.nN[kk*3+2];}
+      const nl=hyp(nx,ny,nz); nx/=nl;ny/=nl;nz/=nl;
+      const Tu=[(g.pN[k10*3]-g.pN[k00*3])/g.du,(g.pN[k10*3+1]-g.pN[k00*3+1])/g.du,(g.pN[k10*3+2]-g.pN[k00*3+2])/g.du];
+      const Tv=[(g.pN[k01*3]-g.pN[k00*3])/g.dv,(g.pN[k01*3+1]-g.pN[k00*3+1])/g.dv,(g.pN[k01*3+2]-g.pN[k00*3+2])/g.dv];
+      // beard grain: downward along the skin, a little backward under the jaw,
+      // and splayed outward on the moustache; then per-follicle scatter (+/-15 deg)
+      let gx=0, gy=-1, gz=-0.3;
+      if(reg==='moustache') gx=Math.sign(pa[0])*0.45;
+      let gd=gx*nx+gy*ny+gz*nz; gx-=gd*nx; gy-=gd*ny; gz-=gd*nz;
+      let gl=hyp(gx,gy,gz); if(gl<1e-6){gx=0;gy=0;gz=-1;gd=-nz;gx-=gd*nx;gy-=gd*ny;gz-=gd*nz;gl=hyp(gx,gy,gz)||1;}
+      gx/=gl;gy/=gl;gz/=gl;
+      const jit=gauss(rng)*15*D2R, cj=Math.cos(jit), sj=Math.sin(jit);
+      const bx=ny*gz-nz*gy, by=nz*gx-nx*gz, bz=nx*gy-ny*gx; // n x g
+      const hx=cj*gx+sj*bx, hy=cj*gy+sj*by, hz=cj*gz+sj*bz;
+      // express grain in the (Tu,Tv) skin basis so it rides with skin deformation
+      const a11=Tu[0]*Tu[0]+Tu[1]*Tu[1]+Tu[2]*Tu[2], a12=Tu[0]*Tv[0]+Tu[1]*Tv[1]+Tu[2]*Tv[2], a22=Tv[0]*Tv[0]+Tv[1]*Tv[1]+Tv[2]*Tv[2];
+      const b1=Tu[0]*hx+Tu[1]*hy+Tu[2]*hz, b2=Tv[0]*hx+Tv[1]*hy+Tv[2]*hz, det=a11*a22-a12*a12;
+      const cu=det>1e-14?(b1*a22-b2*a12)/det:0, cv=det>1e-14?(a11*b2-a12*b1)/det:0;
+      list.push([gi,k00,fu,fv,cu,cv, (PHYS.GRAIN_DEG+gauss(rng)*8)*D2R, clamp(1+0.15*gauss(rng),0.6,1.5), clamp(1+0.10*gauss(rng),0.75,1.3)]);
+    }
+  }
+  const total=list.length;
+  if(total>MAX_HAIRS_PER_FIG){ // drawing budget: keep a uniform random subset
+    for(let i=total-1;i>0;i--){const j=Math.floor(rng()*(i+1)); const t=list[i]; list[i]=list[j]; list[j]=t;}
+    list.length=MAX_HAIRS_PER_FIG;
+  }
+  F.keepFrac=list.length/Math.max(1,total);
+  const N=list.length; F.N=N;
+  const H=F.h={grid:new Uint8Array(N), k00:new Uint32Array(N), fu:new Float32Array(N), fv:new Float32Array(N),
+    cu:new Float32Array(N), cv:new Float32Array(N), beta:new Float32Array(N), lj:new Float32Array(N), dj:new Float32Array(N),
+    L:new Float64Array(N), D:new Float64Array(N), kap:new Float64Array(N), m:new Float64Array(N), c11:new Float64Array(N), c12:new Float64Array(N), c21:new Float64Array(N), c22:new Float64Array(N), fn:new Float32Array(N),
+    q1:new Float64Array(N), q2:new Float64Array(N), v1:new Float64Array(N), v2:new Float64Array(N),
+    pr:new Float64Array(N*3), pv:new Float64Array(N*3), rl:new Float64Array(N*3), init:0,
+    // display outputs
+    rx:new Float32Array(N), ry:new Float32Array(N), rz:new Float32Array(N), dx:new Float32Array(N), dy:new Float32Array(N), vis:new Uint8Array(N),
+    bend:new Float32Array(N), skin:new Float32Array(N)};
+  for(let i=0;i<N;i++){const e=list[i]; H.grid[i]=e[0];H.k00[i]=e[1];H.fu[i]=e[2];H.fv[i]=e[3];H.cu[i]=e[4];H.cv[i]=e[5];H.beta[i]=e[6];H.lj[i]=e[7];H.dj[i]=e[8];}
+  F.realCount = total;
+  updateHairMechanics(F);
+}
+
+function effectiveE(){
+  return PHYS.E_STIFF*Math.pow(PHYS.E_SOFT/PHYS.E_STIFF, stubble.softness)*(1-PHYS.WET_E_DROP*cond.wetness);
+}
+// Per-hair stiffness, mass and the exact state-transition matrix of
+//   J q'' + c q' + kappa q = Q   over one step DT with Q held constant.
+function updateHairMechanics(F){
+  const H=F.h, E=effectiveE(), z=PHYS.ZETA;
+  for(let i=0;i<F.N;i++){
+    const L=stubble.lengthMM/1000*H.lj[i], D=PHYS.D_HAIR*H.dj[i];
+    const I=Math.PI*D**4/64, kap=PHYS.KAPPA_COEF*E*I/L, m=PHYS.RHO_HAIR*Math.PI*D*D/4*L, J=m*L*L/3;
+    const w=Math.sqrt(kap/J), wd=w*Math.sqrt(1-z*z), ex=Math.exp(-z*w*DT), c=Math.cos(wd*DT), s=Math.sin(wd*DT);
+    H.L[i]=L; H.D[i]=D; H.kap[i]=kap; H.m[i]=m; H.fn[i]=w/(2*Math.PI);
+    H.c11[i]=ex*(c+z*w/wd*s); H.c12[i]=ex*s/wd; H.c21[i]=-ex*w*w/wd*s; H.c22[i]=ex*(c-z*w/wd*s);
+  }
+}
+
+// ---------- per-step physics ----------
+const air=new Float64Array(3);
+const stats={maxBend:0, sumBend:0, nBend:0, maxSkin:0, uMid:0, nMid:0, Re:0, Cd:0};
+function stepFigure(F, t, dt){
+  const J=F.J=jawDrive(F,t,dt,cond);
+  F.yaw = F.yawBase + 16*D2R*Math.sin(2*Math.PI*t/19+F.idx*2.1) ;
+  const cy=Math.cos(F.yaw), sy=Math.sin(F.yaw), s=F.scale;
+  const Hx=F.x, Hy=HEAD_Y, Hz=0;
+  F.Hy=Hy;
+  // ---- skin grids: deform, transform to world, outer flow ----
+  for(let gi=0;gi<2;gi++){
+    const g=F.grids[gi]; deformGrid(g,J);
+    const isNeck=gi===1, kpot=isNeck?2.0:1.5;
+    for(let k=0;k<g.n;k++){
+      const k3=k*3;
+      const lx=g.lp[k3]*s, ly=g.lp[k3+1]*s, lz=g.lp[k3+2]*s;
+      const x=Hx+lx*cy+lz*sy, y=Hy+ly, z=Hz-lx*sy+lz*cy;
+      g.wp[k3]=x; g.wp[k3+1]=y; g.wp[k3+2]=z;
+      const nx=g.ln[k3]*cy+g.ln[k3+2]*sy, ny=g.ln[k3+1], nz=-g.ln[k3]*sy+g.ln[k3+2]*cy;
+      g.wn[k3]=nx; g.wn[k3+1]=ny; g.wn[k3+2]=nz;
+      g.wTu[k3]=s*(g.lTu[k3]*cy+g.lTu[k3+2]*sy); g.wTu[k3+1]=s*g.lTu[k3+1]; g.wTu[k3+2]=s*(-g.lTu[k3]*sy+g.lTu[k3+2]*cy);
+      g.wTv[k3]=s*(g.lTv[k3]*cy+g.lTv[k3+2]*sy); g.wTv[k3+1]=s*g.lTv[k3+1]; g.wTv[k3+2]=s*(-g.lTv[k3]*sy+g.lTv[k3+2]*cy);
+      if(display.skinGain!==1){
+        const px=g.pN[k3]*s, py=g.pN[k3+1]*s, pz=g.pN[k3+2]*s;
+        g.wpN[k3]=Hx+px*cy+pz*sy; g.wpN[k3+1]=Hy+py; g.wpN[k3+2]=Hz-px*sy+pz*cy;
+      }
+      // potential flow over a bluff body: tangential outer speed = kpot * (U - (U.n)n)
+      airAt(x,y,z,t,air);
+      const U=hyp(air[0],air[1],air[2])+1e-9;
+      const Un=air[0]*nx+air[1]*ny+air[2]*nz;
+      let ux=kpot*(air[0]-Un*nx), uy=kpot*(air[1]-Un*ny), uz=kpot*(air[2]-Un*nz);
+      const gam=Math.acos(clamp(-Un/U,-1,1));                   // angle from stagnation
+      const sep=smooth((PHYS.SEP_DEG-6)*D2R,(PHYS.SEP_DEG+8)*D2R,gam);
+      const f=1-(1-PHYS.WAKE_FRACTION)*sep;
+      ux*=f; uy*=f; uz*=f;
+      if(sep>0){ // vortex-shedding buffeting in the wake, f = St*U/D_head
+        const fsh=PHYS.STROUHAL*U/(2*PHYS.HEAD_R), A=PHYS.WAKE_BUFFET*U*sep;
+        const a1=A*Math.sin(2*Math.PI*fsh*t+k*0.37), a2=A*Math.cos(2*Math.PI*fsh*0.83*t+k*0.61);
+        const tu=hyp(g.wTu[k3],g.wTu[k3+1],g.wTu[k3+2])+1e-9, tv=hyp(g.wTv[k3],g.wTv[k3+1],g.wTv[k3+2])+1e-9;
+        ux+=a1*g.wTu[k3]/tu+a2*g.wTv[k3]/tv; uy+=a1*g.wTu[k3+1]/tu+a2*g.wTv[k3+1]/tv; uz+=a1*g.wTu[k3+2]/tu+a2*g.wTv[k3+2]/tv;
+      }
+      g.ue[k3]=ux; g.ue[k3+1]=uy; g.ue[k3+2]=uz;
+      // boundary-layer thickness: Hiemenz stagnation value, growing as 5 sqrt(nu x / u_e)
+      const ue=hyp(ux,uy,uz);
+      const d0=2.4*Math.sqrt(PHYS.NU_AIR*PHYS.HEAD_R/(kpot*U));
+      const d1=5*Math.sqrt(PHYS.NU_AIR*PHYS.HEAD_R*gam/Math.max(ue,0.05));
+      g.del[k]=lerp(Math.max(d0,d1), 0.008, sep);
+    }
+  }
+  // full-head silhouette samples
+  const fg=F.full;
+  for(let k=0;k<fg.n;k++){
+    deformPoint(fg.pN[k*3],fg.pN[k*3+1],fg.pN[k*3+2],fg.nN[k*3],fg.nN[k*3+1],fg.nN[k*3+2],fg.w[k*4],fg.w[k*4+1],fg.w[k*4+2],fg.w[k*4+3],J,fg.lp,k*3);
+    const lx=fg.lp[k*3]*s, ly=fg.lp[k*3+1]*s, lz=fg.lp[k*3+2]*s;
+    fg.wp[k*3]=Hx+lx*cy+lz*sy; fg.wp[k*3+1]=Hy+ly; fg.wp[k*3+2]=Hz-lx*sy+lz*cy;
+  }
+
+  // ---- hairs ----
+  const H=F.h, N=F.N, mag=display.mag, gain=display.skinGain, pilo=cond.piloerection*PHYS.PILO_DEG*D2R;
+  const canopyA = canopyCoef();
+  const isSel = F.idx===selected;
+  const first=!H.init; H.init=1;
+  const gx=0, gy=-PHYS.G, gz=0;
+  const NS=4;
+  for(let i=0;i<N;i++){
+    const g=F.grids[H.grid[i]], k00=H.k00[i], k10=k00+1, k01=k00+g.nu, k11=k01+1;
+    const fu=H.fu[i], fv=H.fv[i], w00=(1-fu)*(1-fv), w10=fu*(1-fv), w01=(1-fu)*fv, w11=fu*fv;
+    const a=k00*3,b=k10*3,c=k01*3,d=k11*3;
+    const px=w00*g.wp[a]+w10*g.wp[b]+w01*g.wp[c]+w11*g.wp[d];
+    const py=w00*g.wp[a+1]+w10*g.wp[b+1]+w01*g.wp[c+1]+w11*g.wp[d+1];
+    const pz=w00*g.wp[a+2]+w10*g.wp[b+2]+w01*g.wp[c+2]+w11*g.wp[d+2];
+    let nx=w00*g.wn[a]+w10*g.wn[b]+w01*g.wn[c]+w11*g.wn[d];
+    let ny=w00*g.wn[a+1]+w10*g.wn[b+1]+w01*g.wn[c+1]+w11*g.wn[d+1];
+    let nz=w00*g.wn[a+2]+w10*g.wn[b+2]+w01*g.wn[c+2]+w11*g.wn[d+2];
+    let nl=hyp(nx,ny,nz); nx/=nl; ny/=nl; nz/=nl;
+    const i3=i*3;
+    if(nz<=0.04){ // facing away from the viewer: keep root history, skip the load
+      // (hairs settle within a few ms once they turn back into view)
+      H.pr[i3]=px;H.pr[i3+1]=py;H.pr[i3+2]=pz; H.pv[i3]=0;H.pv[i3+1]=0;H.pv[i3+2]=0; H.rl[i3]=NaN;
+      H.vis[i]=0; continue;
+    }
+    const cu=H.cu[i], cv=H.cv[i];
+    let hx=cu*(w00*g.wTu[a]+w10*g.wTu[b]+w01*g.wTu[c]+w11*g.wTu[d])+cv*(w00*g.wTv[a]+w10*g.wTv[b]+w01*g.wTv[c]+w11*g.wTv[d]);
+    let hy=cu*(w00*g.wTu[a+1]+w10*g.wTu[b+1]+w01*g.wTu[c+1]+w11*g.wTu[d+1])+cv*(w00*g.wTv[a+1]+w10*g.wTv[b+1]+w01*g.wTv[c+1]+w11*g.wTv[d+1]);
+    let hz=cu*(w00*g.wTu[a+2]+w10*g.wTu[b+2]+w01*g.wTu[c+2]+w11*g.wTu[d+2])+cv*(w00*g.wTv[a+2]+w10*g.wTv[b+2]+w01*g.wTv[c+2]+w11*g.wTv[d+2]);
+    let hd=hx*nx+hy*ny+hz*nz; hx-=hd*nx; hy-=hd*ny; hz-=hd*nz;
+    let hl=hyp(hx,hy,hz)||1; hx/=hl; hy/=hl; hz/=hl;
+    // rest direction r and bending basis e1 (toward the grain), e2 = r x e1
+    const beta=H.beta[i]-pilo, cb=Math.cos(beta), sb=Math.sin(beta);
+    const rx=cb*nx+sb*hx, ry=cb*ny+sb*hy, rz=cb*nz+sb*hz;
+    const e1x=-sb*nx+cb*hx, e1y=-sb*ny+cb*hy, e1z=-sb*nz+cb*hz;
+    const e2x=ry*e1z-rz*e1y, e2y=rz*e1x-rx*e1z, e2z=rx*e1y-ry*e1x;
+    // root kinematics (finite differences; includes head turning and jaw motion)
+    let vx=0,vy=0,vz=0,ax=0,ay=0,az=0;
+    if(!first){ vx=(px-H.pr[i3])/dt; vy=(py-H.pr[i3+1])/dt; vz=(pz-H.pr[i3+2])/dt;
+      ax=(vx-H.pv[i3])/dt; ay=(vy-H.pv[i3+1])/dt; az=(vz-H.pv[i3+2])/dt; }
+    H.pr[i3]=px;H.pr[i3+1]=py;H.pr[i3+2]=pz; H.pv[i3]=vx;H.pv[i3+1]=vy;H.pv[i3+2]=vz;
+    // current hair direction from bending state q
+    let q1=H.q1[i], q2=H.q2[i];
+    const qm=hyp(q1,q2);
+    let dx=rx,dy=ry,dz=rz;
+    if(qm>1e-12){ const cq=Math.cos(qm), sq=Math.sin(qm)/qm; dx=cq*rx+sq*(q1*e1x+q2*e2x); dy=cq*ry+sq*(q1*e1y+q2*e2y); dz=cq*rz+sq*(q1*e1z+q2*e2z); }
+    // aerodynamic load: cross-flow drag on 4 segments
+    const L=H.L[i], D=H.D[i], del=w00*g.del[k00]+w10*g.del[k10]+w01*g.del[k01]+w11*g.del[k11];
+    const uex=w00*g.ue[a]+w10*g.ue[b]+w01*g.ue[c]+w11*g.ue[d];
+    const uey=w00*g.ue[a+1]+w10*g.ue[b+1]+w01*g.ue[c+1]+w11*g.ue[d+1];
+    const uez=w00*g.ue[a+2]+w10*g.ue[b+2]+w01*g.ue[c+2]+w11*g.ue[d+2];
+    const dn=Math.max(0, dx*nx+dy*ny+dz*nz);       // height gained per unit length
+    const hc=stubble.lengthMM/1000*Math.cos(PHYS.GRAIN_DEG*D2R-pilo); // canopy height
+    let Q1=0,Q2=0, uMidSample=0, ReS=0, CdS=0;
+    for(let sI=0;sI<NS;sI++){
+      const sd=(sI+0.5)/NS*L, zh=sd*dn;
+      const eta=Math.min(1,zh/del);
+      const prof=(2*eta-2*eta*eta*eta+eta*eta*eta*eta) * (zh<hc?Math.exp(canopyA*(zh/hc-1)):1); // Pohlhausen BL x canopy
+      const ux=uex*prof-vx, uy=uey*prof-vy, uz=uez*prof-vz;   // air relative to the moving root
+      const ud=ux*dx+uy*dy+uz*dz;
+      const upx=ux-ud*dx, upy=uy-ud*dy, upz=uz-ud*dz;
+      const up=hyp(upx,upy,upz);
+      if(up<1e-6) continue;
+      const Re=Math.max(up*D/PHYS.NU_AIR,0.1);
+      const cr=Math.cbrt(Re), Cd=1+10/(cr*cr);                          // White's cylinder correlation
+      const fk=0.5*PHYS.RHO_AIR*Cd*D*up*(L/NS);                 // N per (m/s)
+      Q1+=sd*fk*(upx*e1x+upy*e1y+upz*e1z);
+      Q2+=sd*fk*(upx*e2x+upy*e2y+upz*e2z);
+      if(sI===2){uMidSample=up; ReS=Re; CdS=Cd;}
+    }
+    // weight and inertia of the shaft (uniform mass, lever arm L/2): tiny, but included
+    const mh=H.m[i]*L*0.5;
+    Q1+=mh*((gx-ax)*e1x+(gy-ay)*e1y+(gz-az)*e1z);
+    Q2+=mh*((gx-ax)*e2x+(gy-ay)*e2y+(gz-az)*e2z);
+    // exact update of the damped oscillator in each bending direction
+    const kap=H.kap[i];
+    const x1=Q1/kap, x2=Q2/kap;
+    let e1=q1-x1, e2=q2-x2, w1=H.v1[i], w2=H.v2[i];
+    const c11=H.c11[i],c12=H.c12[i],c21=H.c21[i],c22=H.c22[i];
+    q1=x1+c11*e1+c12*w1; H.v1[i]=c21*e1+c22*w1;
+    q2=x2+c11*e2+c12*w2; H.v2[i]=c21*e2+c22*w2;
+    let qn=hyp(q1,q2);
+    if(qn>PHYS.BEND_CLAMP){ q1*=PHYS.BEND_CLAMP/qn; q2*=PHYS.BEND_CLAMP/qn; qn=PHYS.BEND_CLAMP; }
+    // skin contact: the hair cannot pass below the skin surface
+    if(qn>1e-9 && heightAbove(cb,sb,qn,q1/qn)<MIN_LIFT){
+      const sc=contactScale(cb,sb,qn,q1/qn); q1*=sc; q2*=sc; qn*=sc; H.v1[i]=0; H.v2[i]=0;
+    }
+    H.q1[i]=q1; H.q2[i]=q2;
+    // skin-driven rotation rate of the rest direction, measured in the head frame
+    const rlx=rx*cy-rz*sy, rly=ry, rlz=rx*sy+rz*cy;
+    let skinRate=0;
+    if(!first && H.rl[i3]===H.rl[i3]){ const dd=rlx*H.rl[i3]+rly*H.rl[i3+1]+rlz*H.rl[i3+2]; skinRate=Math.acos(clamp(dd,-1,1))/dt; }
+    H.rl[i3]=rlx;H.rl[i3+1]=rly;H.rl[i3+2]=rlz;
+    // ---- display direction ----
+    let Rx=rx,Ry=ry,Rz=rz, Px=px,Py=py,Pz=pz;
+    if(gain!==1){
+      // neutral root & rest direction, extrapolated by the skin gain
+      const pnx=w00*g.wpN[a]+w10*g.wpN[b]+w01*g.wpN[c]+w11*g.wpN[d];
+      const pny=w00*g.wpN[a+1]+w10*g.wpN[b+1]+w01*g.wpN[c+1]+w11*g.wpN[d+1];
+      const pnz=w00*g.wpN[a+2]+w10*g.wpN[b+2]+w01*g.wpN[c+2]+w11*g.wpN[d+2];
+      Px=pnx+gain*(px-pnx); Py=pny+gain*(py-pny); Pz=pnz+gain*(pz-pnz);
+      // neutral normal (rotated by yaw) with the same grain: extrapolate the
+      // rest direction linearly from its neutral version
+      const nnx=w00*g.nN[a]+w10*g.nN[b]+w01*g.nN[c]+w11*g.nN[d], nny=w00*g.nN[a+1]+w10*g.nN[b+1]+w01*g.nN[c+1]+w11*g.nN[d+1], nnz=w00*g.nN[a+2]+w10*g.nN[b+2]+w01*g.nN[c+2]+w11*g.nN[d+2];
+      const wnx=nnx*cy+nnz*sy, wnz=-nnx*sy+nnz*cy;
+      const r0x=cb*wnx+sb*hx, r0y=cb*nny+sb*hy, r0z=cb*wnz+sb*hz;
+      Rx=r0x+gain*(rx-r0x); Ry=r0y+gain*(ry-r0y); Rz=r0z+gain*(rz-r0z);
+      const rl=hyp(Rx,Ry,Rz)||1; Rx/=rl;Ry/=rl;Rz/=rl;
+    }
+    // magnified bending with a soft clip at 80 deg
+    let Dx=Rx,Dy=Ry,Dz=Rz, shown=0;
+    if(qn>1e-12){
+      shown=1.4*Math.tanh(mag*qn/1.4);
+      if(heightAbove(cb,sb,shown,q1/qn)<MIN_LIFT) shown*=contactScale(cb,sb,shown,q1/qn);
+      const cs=Math.cos(shown), sn=Math.sin(shown)/qn;
+      Dx=cs*Rx+sn*(q1*e1x+q2*e2x); Dy=cs*Ry+sn*(q1*e1y+q2*e2y); Dz=cs*Rz+sn*(q1*e1z+q2*e2z);
+    }
+    H.rx[i]=Px; H.ry[i]=Py; H.rz[i]=Pz;
+    H.dx[i]=Dx*L; H.dy[i]=Dy*L;
+    H.vis[i]=1;
+    H.bend[i]=shown; H.skin[i]=skinRate*gain;
+    if(isSel){
+      const bd=qn*R2D; if(bd>stats.maxBend)stats.maxBend=bd;
+      { stats.sumBend+=bd; stats.nBend++; if(uMidSample>0){stats.uMid+=uMidSample; stats.nMid++; stats.Re+=ReS; stats.Cd+=CdS;} }
+      if(skinRate>stats.maxSkin) stats.maxSkin=skinRate;
+    }
+  }
+}
+// Height gained per unit length (d.n) for a hair at rest angle beta (cb, sb)
+// bent by angle q, where u = q1/|q| is the share of the bend toward the grain.
+const MIN_LIFT=0.05;
+function heightAbove(cb,sb,q,u){ return cb*Math.cos(q)-sb*Math.sin(q)*u; }
+function contactScale(cb,sb,q,u){ // largest fraction of q that keeps the hair off the skin
+  let lo=0, hi=1; for(let k=0;k<12;k++){ const m=(lo+hi)/2; if(heightAbove(cb,sb,q*m,u)>=MIN_LIFT) lo=m; else hi=m; } return lo;
+}
+// Canopy attenuation coefficient a (Cionco/Inoue exponential in-canopy profile)
+// from the frontal-area index lambda = n * D * h  (n = hairs per m^2, h = canopy height).
+function canopyCoef(){
+  const n=stubble.density*1e4, h=stubble.lengthMM/1000*Math.cos((PHYS.GRAIN_DEG-PHYS.PILO_DEG*cond.piloerection)*D2R);
+  const lam=n*PHYS.D_HAIR*h;
+  return 4*lam/(lam+0.2);
+}
+
+// =====================================================================
+// RENDERING
+// =====================================================================
+const stage=document.getElementById('stage'), ctx=stage.getContext('2d');
+const loupe=document.getElementById('loupe'), lctx=loupe.getContext('2d');
+let DPR=1, W=0, Hh=0, view={S:800, ox:0, oy:0};
+function resize(){
+  DPR=Math.min(window.devicePixelRatio||1,2);
+  const r=stage.getBoundingClientRect(); W=r.width; Hh=r.height;
+  stage.width=Math.round(W*DPR); stage.height=Math.round(Hh*DPR);
+  const lr=loupe.getBoundingClientRect(); loupe.width=Math.round(lr.width*DPR); loupe.height=Math.round(lr.height*DPR);
+  const S=Math.min(Hh*0.80/0.78, W/1.75);
+  view={S, ox:W*0.5, oy:Hh-30};
+}
+window.addEventListener('resize',resize);
+
+// colour buckets: 4 bend levels x 4 skin levels
+const INK=[43,38,33], WIND=[31,111,209], MUSC=[222,90,43];
+const BUCKETS=[];
+for(let s=0;s<4;s++)for(let b=0;b<4;b++){
+  const tb=b/3, ts=s/3;
+  const c=INK.map((v,i)=>v+(WIND[i]-v)*tb).map((v,i)=>v+(MUSC[i]-v)*ts);
+  BUCKETS.push(`rgb(${c.map(Math.round).join(',')})`);
+}
+function bucketOf(bend, skin){
+  let b=Math.min(3,Math.round(bend/(55*D2R)*3)), s=Math.min(3,Math.round(skin/(70*D2R)*3));
+  if(display.color==='ink'){b=0;s=0;} else if(display.color==='bend') s=0; else if(display.color==='skin') b=0;
+  return s*4+b;
+}
+
+function hull(pts){ // monotone chain on [[x,y],...]
+  pts.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+  const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);
+  const lo=[],up=[];
+  for(const p of pts){while(lo.length>=2&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p);}
+  for(let i=pts.length-1;i>=0;i--){const p=pts[i];while(up.length>=2&&cr(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p);}
+  up.pop();lo.pop();return lo.concat(up);
+}
+function fillPoly(c, P, fill, stroke){
+  c.beginPath(); P.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1])); c.closePath();
+  c.fillStyle=fill; c.fill(); if(stroke){c.strokeStyle=stroke;c.lineWidth=1;c.stroke();}
+}
+
+// local feature point -> world (with jaw deformation)
+const fp=new Float64Array(3), fw=new Float64Array(4);
+function featureWorld(F, th, ph, out){
+  headNeutral(th,ph,fp,0);
+  const x=fp[0],y=fp[1],z=fp[2];
+  skinWeights(x,y,z,false,fw);
+  // neutral normal approx: ellipsoid gradient
+  let nx=x/(HEAD.a*HEAD.a), ny=y/(HEAD.b*HEAD.b), nz=z/(HEAD.c*HEAD.c); const l=hyp(nx,ny,nz); nx/=l;ny/=l;nz/=l;
+  deformPoint(x,y,z,nx,ny,nz,fw[0],fw[1],fw[2],fw[3],F.J,fp,0);
+  const s=F.scale, cy=Math.cos(F.yaw), sy=Math.sin(F.yaw);
+  const lx=fp[0]*s, ly=fp[1]*s, lz=fp[2]*s;
+  out[0]=F.x+lx*cy+lz*sy; out[1]=F.Hy+ly; out[2]=-lx*sy+lz*cy;
+  out[3]=-nx*sy+nz*cy; // world normal z (visibility)
+  return out;
+}
+function localWorld(F, x,y,z, out){
+  const s=F.scale, cy=Math.cos(F.yaw), sy=Math.sin(F.yaw);
+  const lx=x*s, ly=y*s, lz=z*s;
+  out[0]=F.x+lx*cy+lz*sy; out[1]=F.Hy+ly; out[2]=-lx*sy+lz*cy; return out;
+}
+
+function drawBody(c, F, V){
+  const X=x=>V.ox+V.S*x, Y=y=>V.oy-V.S*y;
+  const s=F.scale, yb=F.yawBase, wf=0.62+0.38*Math.abs(Math.cos(yb));
+  const sh=HEAD_Y+NECK.yBot*s+0.01, hip=0.17, cx=F.x;
+  // legs
+  c.fillStyle='#4a4540';
+  const lw=0.045*wf;
+  [-1,1].forEach(k=>{ c.beginPath(); c.roundRect(X(cx+k*0.04*wf-lw/2),Y(hip+0.01),V.S*lw,V.S*(hip+0.01),V.S*0.02); c.fill(); });
+  // torso
+  const shW=0.125*wf*s, wW=0.095*wf*s;
+  c.beginPath();
+  c.moveTo(X(cx-shW),Y(sh-0.03)); c.quadraticCurveTo(X(cx-shW),Y(sh),X(cx-shW+0.05),Y(sh));
+  c.lineTo(X(cx+shW-0.05),Y(sh)); c.quadraticCurveTo(X(cx+shW),Y(sh),X(cx+shW),Y(sh-0.03));
+  c.lineTo(X(cx+wW),Y(hip)); c.lineTo(X(cx-wW),Y(hip)); c.closePath();
+  c.fillStyle=F.def.shirt; c.fill();
+  // arms
+  c.fillStyle=F.def.shirt;
+  [-1,1].forEach(k=>{ c.save(); c.translate(X(cx+k*(shW-0.012)),Y(sh-0.02)); c.rotate(k*0.12); c.beginPath(); c.roundRect(-V.S*0.019,0,V.S*0.038,V.S*0.19,V.S*0.019); c.globalAlpha=0.92; c.fill(); c.restore(); });
+}
+
+const tmp4=new Float64Array(4);
+function drawHead(c, F, V, glyph, lw){
+  const X=x=>V.ox+V.S*x, Y=y=>V.oy-V.S*y;
+  const H=F.h;
+  // neck
+  const ng=F.grids[1], np=[];
+  for(let k=0;k<ng.n;k++) np.push([X(ng.wp[k*3]),Y(ng.wp[k*3+1])]);
+  fillPoly(c, hull(np), '#e3c4a9', '#c9a88c');
+  drawHairs(c,F,V,glyph,lw,1);
+  // head silhouette
+  const fg=F.full, hp=[];
+  for(let k=0;k<fg.n;k++) hp.push([X(fg.wp[k*3]),Y(fg.wp[k*3+1])]);
+  const hh=hull(hp);
+  const grd=c.createLinearGradient(X(F.x-0.08),0,X(F.x+0.08),0);
+  grd.addColorStop(0,'#efd6bf'); grd.addColorStop(1,'#e2c2a6');
+  fillPoly(c, hh, grd, '#c9a88c');
+  // ears
+  for(const sgn of [1,-1]){
+    const e=featureWorld(F, sgn*92*D2R, 2*D2R, tmp4);
+    const nz=-sgn*Math.sin(F.yaw);
+    if(nz>-0.05){
+      c.beginPath(); c.ellipse(X(e[0]),Y(e[1]),V.S*0.012*Math.max(0.25,Math.abs(nz))*F.scale,V.S*0.03*F.scale,0,0,Math.PI*2);
+      c.fillStyle='#e4c2a5'; c.fill(); c.strokeStyle='#c9a88c'; c.stroke();
+    }
+  }
+  // eyes + brows
+  c.fillStyle='#2b2621'; c.strokeStyle='#5b4f44'; c.lineWidth=Math.max(1,V.S*0.0025);
+  for(const sgn of [1,-1]){
+    const e=featureWorld(F, sgn*26*D2R, 12*D2R, tmp4);
+    if(e[3]>0.1){ c.beginPath(); c.ellipse(X(e[0]),Y(e[1]),V.S*0.0045*e[3]+0.8,V.S*0.0045+0.8,0,0,Math.PI*2); c.fill();
+      const b1=featureWorld(F, sgn*16*D2R, 20*D2R, [0,0,0,0]), b2=featureWorld(F, sgn*36*D2R, 19*D2R, [0,0,0,0]);
+      c.beginPath(); c.moveTo(X(b1[0]),Y(b1[1])); c.lineTo(X(b2[0]),Y(b2[1])); c.stroke(); }
+  }
+  // nose: a short stroke from the bridge to a tip that stands off the face
+  const nb=featureWorld(F,0,3*D2R,[0,0,0,0]);
+  if(nb[3]>-0.3){
+    const tip=localWorld(F, 0,-0.022, HEAD.c*Math.cos(-12*D2R)+0.020,[0,0,0]), base=featureWorld(F,0,-18*D2R,[0,0,0,0]);
+    c.beginPath(); c.moveTo(X(nb[0]),Y(nb[1])); c.lineTo(X(tip[0]),Y(tip[1])); c.lineTo(X(base[0]),Y(base[1])); c.stroke();
+  }
+  // mouth: upper lip line (fixed) and lower lip line (follows the mandible)
+  const up=[],lo=[];
+  for(const a of [-22,-11,0,11,22]){ const e=Math.abs(a)===22?0:1; // corners meet
+    up.push(featureWorld(F,a*D2R,(-31.2+1.6*e)*D2R,[0,0,0,0])); lo.push(featureWorld(F,a*D2R,(-31.2-1.6*e)*D2R,[0,0,0,0])); }
+  if(up[2][3]>0.05){
+    // lip points sit 1 mm apart when closed; gap grows with the opening
+    c.beginPath();
+    up.forEach((p,i)=>i?c.lineTo(X(p[0]),Y(p[1])):c.moveTo(X(p[0]),Y(p[1])));
+    for(let i=lo.length-1;i>=0;i--) c.lineTo(X(lo[i][0]),Y(lo[i][1]));
+    c.closePath(); c.fillStyle='#6b3d36'; c.fill();
+    c.strokeStyle='#a5675a'; c.lineWidth=Math.max(1,V.S*0.002); c.stroke();
+  }
+  drawHairs(c,F,V,glyph,lw,0);
+}
+
+function drawHairs(c,F,V,glyph,lw,gridSel){
+  const H=F.h, N=F.N, S=V.S, ox=V.ox, oy=V.oy;
+  const paths=new Array(16); for(let b=0;b<16;b++) paths[b]=[];
+  for(let i=0;i<N;i++){
+    if(H.grid[i]!==gridSel||!H.vis[i]) continue;
+    const b=bucketOf(H.bend[i],H.skin[i]);
+    paths[b].push(i);
+  }
+  c.lineWidth=lw; c.lineCap='round';
+  for(let b=0;b<16;b++){
+    const arr=paths[b]; if(!arr.length) continue;
+    c.beginPath();
+    for(let n=0;n<arr.length;n++){ const i=arr[n];
+      const x0=ox+S*H.rx[i], y0=oy-S*H.ry[i];
+      c.moveTo(x0,y0); c.lineTo(x0+S*glyph*H.dx[i], y0-S*glyph*H.dy[i]); }
+    c.strokeStyle=BUCKETS[b]; c.stroke();
+  }
+}
+
+function render(){
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.clearRect(0,0,W,Hh);
+  ctx.fillStyle='#f2eee6'; ctx.fillRect(0,0,W,Hh);
+  // ground
+  ctx.strokeStyle='#d8cfc1'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(0,view.oy+0.5); ctx.lineTo(W,view.oy+0.5); ctx.stroke();
+  // draw back to front (further z first): all at z=0, so left to right
+  for(const F of figures){
+    if(F.idx===selected){ ctx.fillStyle='rgba(43,38,33,.10)'; ctx.beginPath(); ctx.ellipse(view.ox+view.S*F.x, view.oy, view.S*0.16, 6, 0, 0, Math.PI*2); ctx.fill(); }
+    drawBody(ctx,F,view);
+    drawHead(ctx,F,view,display.glyph,0.8);
+  }
+  // loupe
+  const F=figures[selected];
+  const lw=loupe.width/DPR, lh=loupe.height/DPR;
+  lctx.setTransform(DPR,0,0,DPR,0,0);
+  lctx.clearRect(0,0,lw,lh);
+  lctx.save(); lctx.beginPath(); lctx.arc(lw/2,lh/2,lw/2,0,Math.PI*2); lctx.clip();
+  lctx.fillStyle='#f2eee6'; lctx.fillRect(0,0,lw,lh);
+  const LS=lw/0.165;
+  const ctr=localWorld(F,0,-0.045,0,[0,0,0]);
+  const V={S:LS, ox:lw/2-LS*ctr[0], oy:lh/2+LS*ctr[1]};
+  drawHead(lctx,F,V,1,Math.max(1,LS*0.00025));
+  lctx.restore();
+}
+
+// =====================================================================
+// HUD + READOUTS
+// =====================================================================
+const hud=document.getElementById('hud');
+function dirWord(deg){
+  const d=((deg%360)+360)%360;
+  const names=['from the left','from front-left','from the front','from front-right','from the right','from back-right','from behind','from back-left'];
+  return names[Math.round(d/45)%8];
+}
+function modeWord(){
+  const m=cond.jaw_mode, r=cond.jaw_rate_hz;
+  return {rest:'jaw at rest', chew:`chewing ${r.toFixed(1)} Hz`, talk:`talking ${r.toFixed(1)} syll/s`, chatter:`teeth chattering ${r.toFixed(0)} Hz`, clench:'clenching', yawn:'yawning'}[m];
+}
+let lastStats={maxBend:0,meanBend:0,maxSkin:0,uMid:0,Re:0,Cd:0};
+function updateHud(){
+  const g=gustNow(simT);
+  const mag=display.mag;
+  hud.innerHTML=`<div class="big">Wind ${cond.wind_speed_ms.toFixed(1)} m/s ${dirWord(cond.wind_from_deg)}${g>0.2?` · gust +${g.toFixed(1)} m/s`:''} · ${modeWord()}</div>
+  <div>Bending shown ×${mag<10?mag.toFixed(1):Math.round(mag)}${mag===1?' (true scale)':''} · true peak bend on the selected figure ${fmtDeg(lastStats.maxBend)}</div>
+  <div>Skin motion shown ${display.skinGain===1?'at true scale':'×'+display.skinGain.toFixed(1)} · hair glyphs ${display.glyph}× length in this view</div>`;
+}
+function fmtDeg(d){ return d<0.01?d.toExponential(1)+'°':d<1?d.toFixed(3)+'°':d.toFixed(1)+'°'; }
+function fmtSci(x,u){ if(x===0) return '0 '+u; const e=Math.floor(Math.log10(Math.abs(x))); const m=x/10**e; return `${m.toFixed(2)}×10${sup(e)} ${u}`; }
+function sup(e){return String(e).split('').map(ch=>'⁰¹²³⁴⁵⁶⁷⁸⁹'['0123456789'.indexOf(ch)]||'⁻').join('');}
+const readout=document.getElementById('readout');
+function updateReadout(){
+  const F=figures[selected]; const H=F.h;
+  const E=effectiveE(), L=stubble.lengthMM/1000, D=PHYS.D_HAIR, I=Math.PI*D**4/64, kap=PHYS.KAPPA_COEF*E*I/L;
+  const m=PHYS.RHO_HAIR*Math.PI*D*D/4*L, Jr=m*L*L/3, fn=Math.sqrt(kap/Jr)/(2*Math.PI);
+  const J=F.J||{open:0,bulgeP:0,bulgeN:0,beta:0};
+  const rows=[
+    ['Hairs on this figure', `${F.N.toLocaleString()}${F.keepFrac<1?` (1 in ${(1/F.keepFrac).toFixed(1)} of ${F.realCount.toLocaleString()})`:''}`],
+    ['Effective modulus E', (E/1e9).toFixed(2)+' GPa'],
+    ['Root stiffness κ = 3EI/L', fmtSci(kap,'N·m/rad')],
+    ['Natural frequency', fn>1000?(fn/1000).toFixed(1)+' kHz':fn.toFixed(0)+' Hz'],
+    ['Canopy attenuation a', canopyCoef().toFixed(2)],
+    ['Air speed at mid-hair (mean, visible)', lastStats.uMid.toFixed(2)+' m/s'],
+    ['Hair Reynolds number', lastStats.Re.toFixed(1)],
+    ['Drag coefficient C_d', lastStats.Cd.toFixed(2)],
+    ['True bend: peak / mean', fmtDeg(lastStats.maxBend)+' / '+fmtDeg(lastStats.meanBend)],
+    ['Jaw opening at incisors', J.open.toFixed(1)+' mm ('+(J.beta*R2D).toFixed(1)+'°)'],
+    ['Masseter bulge L / R', (J.bulgeN*1000).toFixed(2)+' / '+(J.bulgeP*1000).toFixed(2)+' mm'],
+    ['Peak skin-driven hair rotation', (lastStats.maxSkin*R2D).toFixed(0)+' °/s']
+  ];
+  readout.innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
+  document.getElementById('readWho').textContent='(figure '+(selected+1)+')';
+}
+
+// =====================================================================
+// MAIN LOOP
+// =====================================================================
+let acc=0, lastFrame=0, hudTimer=0;
+function frame(ts){
+  const now=ts/1000;
+  let dtF=lastFrame?Math.min(0.1,now-lastFrame):1/60; lastFrame=now;
+  if(!display.paused){
+    acc+=dtF; let steps=0;
+    stats.maxBend=0;stats.sumBend=0;stats.nBend=0;stats.maxSkin=0;stats.uMid=0;stats.nMid=0;stats.Re=0;stats.Cd=0;
+    while(acc>=DT && steps<3){
+      updateGusts(simT);
+      for(const F of figures) stepFigure(F, simT, DT);
+      simT+=DT; acc-=DT; steps++;
+    }
+    if(steps===3) acc=0;
+    if(stats.nBend){
+      lastStats={maxBend:stats.maxBend, meanBend:stats.sumBend/stats.nBend, maxSkin:stats.maxSkin,
+        uMid:stats.nMid?stats.uMid/stats.nMid:0, Re:stats.nMid?stats.Re/stats.nMid:0, Cd:stats.nMid?stats.Cd/stats.nMid:0};
+    }
+  }
+  render();
+  hudTimer+=dtF; if(hudTimer>0.25){ hudTimer=0; updateHud(); updateReadout(); }
+  requestAnimationFrame(frame);
+}
+
+stage.addEventListener('click',e=>{
+  const r=stage.getBoundingClientRect(), x=(e.clientX-r.left-view.ox)/view.S;
+  let best=0,bd=1e9; figures.forEach((F,i)=>{const d=Math.abs(F.x-x); if(d<bd){bd=d;best=i;}});
+  selected=best; updateReadout();
+});
+
+// =====================================================================
+// UI
+// =====================================================================
+const $=id=>document.getElementById(id);
+function setCondition(p, presetKey){
+  cond=sanitize(p);
+  activePreset=presetKey||null;
+  document.querySelectorAll('#presets button').forEach(b=>b.classList.toggle('on',b.dataset.k===activePreset));
+  rebuildWind(); renderParams();
+  for(const F of figures) updateHairMechanics(F);
+}
+function sanitize(p){
+  const o={};
+  for(const d of PARAM_DEFS){
+    let v=p[d.k];
+    if(d.options){ o[d.k]=d.options.includes(v)?v:BASE[d.k]; continue; }
+    v=Number(v); if(!isFinite(v)) v=BASE[d.k];
+    if(d.k==='wind_from_deg') v=((v%360)+360)%360; else v=clamp(v,d.min,d.max);
+    o[d.k]=v;
+  }
+  return o;
+}
+function renderParams(){
+  const box=$('params'); box.innerHTML='';
+  for(const d of PARAM_DEFS){
+    const lab=document.createElement('div'); lab.innerHTML=`${d.label} <span class="u">${d.unit}</span>`; if(d.hint) lab.title=d.hint;
+    let inp;
+    if(d.options){ inp=document.createElement('select'); d.options.forEach(o=>{const op=document.createElement('option');op.value=o;op.textContent=o;inp.appendChild(op);}); inp.value=cond[d.k]; }
+    else { inp=document.createElement('input'); inp.type='number'; inp.min=d.min; inp.max=d.max; inp.step=d.step; inp.value=+(+cond[d.k]).toFixed(3); }
+    inp.addEventListener('change',()=>{ const p=Object.assign({},cond); p[d.k]=d.options?inp.value:parseFloat(inp.value); setCondition(p,null); });
+    box.appendChild(lab); box.appendChild(inp);
+  }
+}
+function showExplain(text){ const e=$('explain'); e.style.display=text?'block':'none'; e.textContent=text||''; }
+
+function buildUI(){
+  const pb=$('presets');
+  for(const [k,v] of Object.entries(PRESETS)){
+    const b=document.createElement('button'); b.textContent=v.label; b.dataset.k=k;
+    b.addEventListener('click',()=>{ setCondition(v.p,k); showExplain(v.why); $('llmStatus').textContent=''; });
+    pb.appendChild(b);
+  }
+  const rg=$('regions');
+  for(const r of Object.keys(stubble.regions)){
+    const l=document.createElement('label'); l.innerHTML=`<input type="checkbox" checked> ${r}`;
+    l.querySelector('input').addEventListener('change',e=>{stubble.regions[r]=e.target.checked; reseed();});
+    rg.appendChild(l);
+  }
+  const bind=(id,fn,fmt,outId)=>{const el=$(id); const f=()=>{fn(parseFloat(el.value)); $(outId).textContent=fmt();}; el.addEventListener('input',f); f();};
+  let reseedT=null; const reseed=()=>{clearTimeout(reseedT); reseedT=setTimeout(()=>{for(const F of figures) seedHairs(F); updateReadout();},120);};
+  window.reseed=reseed;
+  bind('sLen',v=>{stubble.lengthMM=v; for(const F of figures) updateHairMechanics(F);},()=>`${stubble.lengthMM.toFixed(1)} mm · ≈${Math.max(0.5,stubble.lengthMM/0.4).toFixed(0)} days`,'vLen');
+  bind('sCov',v=>{stubble.coverage=v; reseed();},()=>`${Math.round(stubble.coverage*100)}%`,'vCov');
+  bind('sSoft',v=>{stubble.softness=v; for(const F of figures) updateHairMechanics(F);},()=>`E ≈ ${(effectiveE()/1e9).toFixed(1)} GPa`,'vSoft');
+  bind('sDen',v=>{stubble.density=v; reseed();},()=>`${stubble.density} hairs/cm²`,'vDen');
+  bind('sMag',v=>{display.mag=Math.pow(10,v);},()=>`×${display.mag<10?display.mag.toFixed(1):Math.round(display.mag)}`,'vMag');
+  bind('sSkin',v=>{display.skinGain=v;},()=>`×${display.skinGain.toFixed(1)}`,'vSkin');
+  bind('sGlyph',v=>{display.glyph=v;},()=>`×${display.glyph}`,'vGlyph');
+  $('colorMode').addEventListener('change',e=>display.color=e.target.value);
+  $('trueBtn').addEventListener('click',()=>{ $('sMag').value=0; $('sSkin').value=1; $('sMag').dispatchEvent(new Event('input')); $('sSkin').dispatchEvent(new Event('input')); });
+  $('pauseBtn').addEventListener('click',e=>{display.paused=!display.paused; e.target.textContent=display.paused?'Play':'Pause'; e.target.classList.toggle('on',display.paused);});
+  // key storage
+  try{ const k=localStorage.getItem('stubble.apiKey'); if(k){$('apiKey').value=k; $('rememberKey').checked=true;} const m=localStorage.getItem('stubble.model'); if(m) $('model').value=m; }catch(e){}
+  $('rememberKey').addEventListener('change',e=>{ try{ if(e.target.checked) localStorage.setItem('stubble.apiKey',$('apiKey').value.trim()); else localStorage.removeItem('stubble.apiKey'); }catch(_){} });
+  $('apiKey').addEventListener('change',()=>{ try{ if($('rememberKey').checked) localStorage.setItem('stubble.apiKey',$('apiKey').value.trim()); }catch(_){} });
+  $('model').addEventListener('change',()=>{ try{ localStorage.setItem('stubble.model',$('model').value.trim()); }catch(_){} });
+  $('interpretBtn').addEventListener('click',interpret);
+  $('condText').addEventListener('keydown',e=>{ if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)) interpret(); });
+  $('doc').innerHTML=DOC_HTML;
+}
+
+// =====================================================================
+// CONDITION -> PARAMETERS  (language model, with a local fallback)
+// =====================================================================
+const SCHEMA = {
+  type:'object', additionalProperties:false,
+  properties:{
+    wind_speed_ms:{type:'number', description:'Mean wind speed at face height relative to the person, m/s (0-35). Include motion of the person (cycling, car window).'},
+    wind_from_deg:{type:'number', description:'Where the wind comes from in the viewer frame: 0 = from stage left, 90 = from the front (into the faces), 180 = from stage right, 270 = from behind.'},
+    turbulence_intensity:{type:'number', description:'Turbulence intensity sigma_u/U, 0-0.6. Open water 0.08-0.12, open field 0.15-0.2, city/near buildings 0.25-0.4, desk fan 0.3-0.4.'},
+    gust_factor:{type:'number', description:'Peak gust speed divided by mean speed, 1-3. Steady 1.0-1.2, typical outdoor 1.4-1.8, very gusty 2-2.5.'},
+    gust_interval_s:{type:'number', description:'Mean seconds between gusts, 2-120.'},
+    jaw_mode:{type:'string', enum:['rest','chew','talk','chatter','clench','yawn'], description:'Dominant jaw activity.'},
+    jaw_rate_hz:{type:'number', description:'chew: strokes/s 0.8-2; talk: syllables/s 3-7; chatter: 5-12 Hz; yawn: yawns per second 0.05-0.2; rest/clench: 0.'},
+    jaw_open_mm:{type:'number', description:'Incisal opening amplitude in mm. rest: 2-3 (resting gap); chew: 10-25; talk: 5-15 (shouting 20+); chatter: 1-4; yawn: 35-55; clench: 0.'},
+    jaw_lateral_mm:{type:'number', description:'Side-to-side mandible shift amplitude, mm 0-10 (chewing 3-6, grinding 5-8, else ~0-1).'},
+    masseter_bulge_mm:{type:'number', description:'Peak thickening of the masseter under the cheek skin, mm 0-3.5 (relaxed 0, chewing gum 1.5-2, tough food or hard clench 2.2-3, speech 0.2-0.5).'},
+    lip_motion:{type:'number', description:'Amount of lip spreading/rounding 0-1 (speech 0.6-1, eating 0.2).'},
+    piloerection:{type:'number', description:'Goosebumps raising hairs, 0-1 (cold, fear, awe).'},
+    wetness:{type:'number', description:'How wet the stubble is, 0-1 (rain, shower, sweat, sea spray). Wet keratin is softer.'},
+    explanation:{type:'string', description:'One or two plain sentences on how the description was read.'}
+  },
+  required:['wind_speed_ms','wind_from_deg','turbulence_intensity','gust_factor','gust_interval_s','jaw_mode','jaw_rate_hz','jaw_open_mm','jaw_lateral_mm','masseter_bulge_mm','lip_motion','piloerection','wetness','explanation']
+};
+const SYS_PROMPT = `You convert a short description of a situation into physical parameters for a simulation of facial stubble on people standing side by side, facing roughly toward the viewer.
+Return only the JSON object. Estimate realistic values; do not exaggerate. If the text does not mention wind, use still air (0.15 m/s, turbulence 0.5, gust_factor 1). If it does not mention the jaw, use rest with a 2.5 mm gap.
+Wind speed anchors (Beaufort): calm <0.5, light air 1, light breeze 2.5, gentle breeze 4.5, moderate 6.5, fresh 9, strong 12, near gale 15, gale 19, strong gale 23, storm 27+. Desk fan at 1 m ~2-3 m/s, hair dryer ~10-15 m/s, walking 1.4, jogging 3, cycling 6-9, car window at city speed 10-15.
+Wind direction: 0 from stage left, 90 from the front into the faces, 180 from stage right, 270 from behind. Motion of the person (cycling, running) gives a headwind from 90.`;
+
+async function interpret(){
+  const text=$('condText').value.trim();
+  if(!text){ $('llmStatus').textContent='Describe a condition first.'; return; }
+  const key=$('apiKey').value.trim(), model=$('model').value.trim()||'claude-haiku-4-5';
+  const btn=$('interpretBtn'); btn.disabled=true;
+  if(!key){
+    const r=localGuess(text); setCondition(r.params,null); showExplain(r.explanation);
+    $('llmStatus').textContent='Guessed locally from keywords (add an API key under Language model settings to use Claude).';
+    btn.disabled=false; return;
+  }
+  $('llmStatus').textContent=`Asking ${model}…`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model, max_tokens:1024, system:SYS_PROMPT,
+        messages:[{role:'user',content:text}],
+        output_config:{format:{type:'json_schema',schema:SCHEMA}}})});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data?.error?.message||('HTTP '+res.status));
+    if(data.stop_reason==='refusal') throw new Error('the model declined this description');
+    const block=(data.content||[]).find(b=>b.type==='text');
+    if(!block) throw new Error('no text in the response');
+    const p=JSON.parse(block.text);
+    setCondition(p,null); showExplain(p.explanation||'');
+    $('llmStatus').textContent=`Parameters from ${model}. Ranges are clamped to the physical limits listed in “Forces in play”.`;
+  }catch(err){
+    const r=localGuess(text); setCondition(r.params,null); showExplain(r.explanation);
+    $('llmStatus').textContent=`The model call failed (${err.message}). Used the local keyword guesser instead.`;
+  }finally{ btn.disabled=false; }
+}
+
+function localGuess(raw){
+  const t=raw.toLowerCase(), p=Object.assign({},BASE), cues=[];
+  const has=re=>re.test(t);
+  // explicit speeds
+  const m=t.match(/(\d+(?:\.\d+)?)\s*(m\/s|mps|metres per second|meters per second|km\/h|kph|kmh|km per hour|mph|miles per hour|knots?|kts?)\b/);
+  let speed=null;
+  if(m){ const v=parseFloat(m[1]), u=m[2]; speed = /km/.test(u)||/kph|kmh/.test(u)? v/3.6 : /mph|mile/.test(u)? v*0.44704 : /kn|kt/.test(u)? v*0.5144 : v; cues.push(`speed ${m[0]}`); }
+  const bf=t.match(/(?:beaufort|force)\s*(\d{1,2})/);
+  if(speed===null && bf){ const B=[0.2,1,2.5,4.5,6.5,9,12,15,19,23,27,31,35][Math.min(12,+bf[1])]; speed=B; cues.push(`Beaufort ${bf[1]}`); }
+  const W=[
+    [/hurricane|typhoon|cyclone/,33,0.3,1.6,'hurricane'],[/\bstorm|stormy/,25,0.35,1.7,'storm'],[/gale/,19,0.3,1.7,'gale'],
+    [/very windy|strong wind|howling/,12,0.3,1.7,'strong wind'],[/hair ?dryer|blow ?dryer/,12,0.4,1.1,'hair dryer'],
+    [/motorbike|motorcycle|convertible|car window|window down|scooter/,13,0.25,1.3,'riding in moving air'],
+    [/gust|gusty/,7,0.3,2.2,'gusts'],[/windy|\bwind\b|blustery/,7,0.25,1.6,'wind'],
+    [/cycl|bike|biking/,7,0.12,1.15,'cycling headwind'],[/run|jog|sprint/,3.5,0.12,1.1,'running headwind'],
+    [/light breeze|gentle breeze|slight breeze/,3,0.2,1.3,'light breeze'],[/breez/,4.5,0.2,1.3,'breeze'],
+    [/desk fan|\bfan\b/,2.5,0.35,1.05,'fan'],[/draft|draught|air ?con|a\/c/,0.8,0.4,1.1,'draft'],
+    [/beach|pier|cliff|sea|ocean|ferry|boat|deck|mountain|summit/,7,0.15,1.5,'exposed place'],
+    [/still|calm|no wind|indoors|inside/,0.15,0.5,1,'still air']
+  ];
+  for(const [re,u,ti,gf,name] of W){ if(has(re)){ p.wind_speed_ms=u; p.turbulence_intensity=ti; p.gust_factor=gf; p.gust_interval_s=gf>1.5?5:10; cues.push(name); break; } }
+  if(speed!==null){ p.wind_speed_ms=speed; if(p.turbulence_intensity===0.5) p.turbulence_intensity=0.2; if(p.gust_factor===1) p.gust_factor=1.4; }
+  if(has(/cycl|bike|run|jog|motor|convertible|window down|scooter|headwind|into the wind|in (?:the|their|his|her) face|from (?:the )?front|head-?on|facing the wind/)){ p.wind_from_deg=90; cues.push('headwind'); }
+  else if(has(/from (?:the )?right|right side/)){ p.wind_from_deg=180; cues.push('from the right'); }
+  else if(has(/from behind|tailwind|at (?:their|his|her|our) backs?/)){ p.wind_from_deg=270; cues.push('from behind'); }
+  else if(has(/crosswind|side ?wind|from (?:the )?left/)){ p.wind_from_deg=0; cues.push('crosswind'); }
+  else p.wind_from_deg=15;
+  const J=[
+    [/yawn|sleepy|tired|drowsy/,{jaw_mode:'yawn',jaw_rate_hz:0.12,jaw_open_mm:45,lip_motion:0.6},'yawning'],
+    [/shiver|freez|teeth chatter|chatter|frigid|icy|hypotherm/,{jaw_mode:'chatter',jaw_rate_hz:8,jaw_open_mm:2.5,jaw_lateral_mm:0.4,masseter_bulge_mm:1.0,piloerection:0.8},'teeth chattering'],
+    [/steak|jerky|tough|crust|bagel|gristle/,{jaw_mode:'chew',jaw_rate_hz:1.15,jaw_open_mm:20,jaw_lateral_mm:5,masseter_bulge_mm:2.6,lip_motion:0.25},'chewing tough food'],
+    [/chew|gum|eat|munch|bite|snack|lunch|dinner|breakfast|sandwich|apple|crunch/,{jaw_mode:'chew',jaw_rate_hz:1.4,jaw_open_mm:15,jaw_lateral_mm:4,masseter_bulge_mm:1.8,lip_motion:0.2},'chewing'],
+    [/shout|yell|scream|cheer/,{jaw_mode:'talk',jaw_rate_hz:3.5,jaw_open_mm:22,jaw_lateral_mm:0.5,masseter_bulge_mm:0.5,lip_motion:1},'shouting'],
+    [/sing|song|choir/,{jaw_mode:'talk',jaw_rate_hz:3,jaw_open_mm:16,jaw_lateral_mm:0.3,masseter_bulge_mm:0.3,lip_motion:0.9},'singing'],
+    [/laugh|giggl/,{jaw_mode:'talk',jaw_rate_hz:5,jaw_open_mm:14,jaw_lateral_mm:0.3,masseter_bulge_mm:0.4,lip_motion:0.9},'laughing'],
+    [/talk|speak|chat|convers|lectur|argu|discuss|explain|gossip|whisper|tell/,{jaw_mode:'talk',jaw_rate_hz:4.5,jaw_open_mm:9,jaw_lateral_mm:0.5,masseter_bulge_mm:0.3,lip_motion:0.8},'talking'],
+    [/clench|grind|bruxi|stress|angry|furious|tense|anxious|nervous|focus|concentrat/,{jaw_mode:'clench',jaw_rate_hz:0,jaw_open_mm:0,masseter_bulge_mm:2.2},'jaw clenched']
+  ];
+  for(const [re,o,name] of J){ if(has(re)){ Object.assign(p,o); cues.push(name); break; } }
+  if(has(/whisper/)) p.jaw_open_mm=5;
+  if(has(/cold|chill|winter|snow|frost|goosebump|scared|fear|awe|spooky/)){ p.piloerection=Math.max(p.piloerection,0.6); cues.push('goosebumps'); }
+  if(has(/rain|drizzle|shower|swim|wet|sweat|spray|soak|humid|steam/)){ p.wetness=has(/drizzle|humid|sweat|steam/)?0.5:1; cues.push('wet stubble'); }
+  if(has(/hair ?dryer|blow ?dryer/)) p.wetness=Math.max(p.wetness,0.6);
+  const explanation = cues.length ? `Keyword reading: ${cues.join(', ')}.` : 'No recognisable cues, so still air and a resting jaw.';
+  return {params:p, explanation};
+}
+
+// =====================================================================
+// DOCUMENTATION (rendered into the "How the forces are computed" panel)
+// =====================================================================
+const DOC_HTML = `
+<p><b>Each hair</b> is a rigid rod of length <code>L</code> and diameter <code>D</code> hinged at the follicle by a rotational spring. Two small bending angles <code>q₁, q₂</code> (toward the grain and sideways) obey</p>
+<p><code>J q̈ + c q̇ + κ q = Q</code>, &nbsp; <code>κ = 3EI/L</code>, <code>I = πD⁴/64</code>, <code>J = mL²/3</code>, <code>m = ρ_hair·πD²/4·L</code>, <code>c = 2ζ√(κJ)</code>.</p>
+<p><code>κ = 3EI/L</code> makes the rod's tip deflect like a cantilever under a tip load. A uniform load would give 4EI/L; wind loads sit near the tip because of the boundary layer, so 3EI/L is the closer match. The equation is advanced with its exact solution over each 1/60 s step, so very stiff short hairs (natural frequencies in the kHz) stay stable and settle to <code>q = Q/κ</code> as they physically do.</p>
+<p><b>Rest direction.</b> The skin normal tilted ${PHYS.GRAIN_DEG}° (±8° per follicle) toward the beard grain, which runs down the face, slightly back under the jaw, and outward on the moustache (±15° per follicle). Grain is stored in the skin's own tangent basis, so it turns and stretches with the skin. Goosebumps reduce the tilt by up to ${PHYS.PILO_DEG}°.</p>
+<p><b>Skin motion (true scale).</b> The skin is a deforming surface. Its normals are recomputed every step from the deformed mesh, so hairs tilt wherever the skin bulges, shears or rotates.</p>
+<table>
+<tr><th>Parameter</th><th>What it does to the skin</th></tr>
+<tr><td>jaw_open_mm</td><td>Mandible angle <code>β = asin(opening / ${(ARM*1000).toFixed(0)} mm)</code> about the TMJ axis, plus forward condylar glide of ${PHYS.CONDYLE_MM_PER_DEG} mm/° beyond 5°. Skin follows the bone with weight 0–0.92 (full on chin and jawline, fading across the cheek and to zero at the TMJ and behind it).</td></tr>
+<tr><td>jaw_lateral_mm</td><td>Side shift of the mandible toward the working side during the closing stroke (frontal-plane teardrop path).</td></tr>
+<tr><td>masseter_bulge_mm</td><td>Normal displacement of the cheek skin over each masseter: Gaussian, σ = ${PHYS.MASSETER_SIGMA*1000} mm, timed by muscle activation (power stroke in chewing, closing phase in chatter, sustained with 8–12 Hz tremor in clenching).</td></tr>
+<tr><td>lip_motion</td><td>Spreading/rounding (±4 mm) and protrusion around the mouth.</td></tr>
+<tr><td>jaw_mode, jaw_rate_hz</td><td>Chewing cycle 38% open, 37% close, 25% occlusal with sides swapping every 10 strokes. Speech uses random syllables (72% open vowels, 28% closures, 10% pauses) through a 6 Hz articulator filter. Chatter is sinusoidal. A yawn is a slow rise, hold and fall.</td></tr>
+</table>
+<p><b>Air load.</b> For each skin point:</p>
+<table>
+<tr><td>Free stream</td><td><code>U</code> from wind_speed_ms and wind_from_deg. Turbulence uses 10 frozen Fourier modes (wavelengths 0.25–20 m, Kolmogorov −5/3 spectrum, rms <code>u:v:w = 1:0.8:0.5</code>, total σ = turbulence_intensity·U) convected with the mean wind (Taylor's hypothesis). Gusts are 1-cos pulses of 1.5–3 s that peak at (gust_factor−1)·U, arrive at Poisson-distributed times averaging gust_interval_s, and travel downstream with the wind.</td></tr>
+<tr><td>Over the head</td><td>Potential flow: tangential speed <code>k(U − (U·n)n)</code>, k = 1.5 (sphere, head) or 2.0 (cylinder, neck). Beyond ${PHYS.SEP_DEG}° from stagnation the flow is separated: ${PHYS.WAKE_FRACTION*100}% of that speed plus ±${PHYS.WAKE_BUFFET*100}% buffeting at the shedding frequency <code>St·U/D</code>, St = ${PHYS.STROUHAL}.</td></tr>
+<tr><td>Near the skin</td><td>Boundary layer δ = max(Hiemenz 2.4√(νR/kU), 5√(νx/uₑ)), x = distance from stagnation, Pohlhausen profile <code>2η − 2η³ + η⁴</code>. The stubble is a porous canopy: <code>u(z) = u(h)·exp(a(z/h − 1))</code>, where the attenuation <code>a = 4λ/(λ+0.2)</code> grows with the frontal-area index <code>λ = n·D·h</code>. Denser stubble shelters itself.</td></tr>
+<tr><td>On the hair</td><td>Air velocity relative to the moving root, cross-flow component only. Drag per length <code>½ρC_d D|u⊥|u⊥</code>, with <code>C_d = 1 + 10 Re^(−2/3)</code> (White, cylinders, Re = |u⊥|D/ν), summed over 4 segments into the moments <code>Q₁, Q₂</code>. Weight and root acceleration (−m(a − g)·L/2) are added. Both are tiny.</td></tr>
+</table>
+<p><b>Stubble controls.</b> Length sets <code>L</code> (±15% per hair, growth about 0.4 mm/day). Softness sets the effective modulus from ${PHYS.E_STIFF/1e9} GPa (dry, coarse) down to ${PHYS.E_SOFT/1e9} GPa. Dry keratin is about 3–5 GPa and wet keratin about 1.5–2.5 GPa; the lowest values stand in for a compliant follicle. Wetness lowers it by up to ${PHYS.WET_E_DROP*100}%. Density is follicles per cm² (typical beards are about 20–80), and hairs are seeded uniformly by true skin area. Area moves the cheek line, sideburns and neckline and toggles regions. Diameter is ${PHYS.D_HAIR*1e6} µm ±10%, damping ratio ζ = ${PHYS.ZETA}.</p>
+<p><b>What you are looking at.</b> Short stubble is very stiff. At 3 mm a 10 m/s wind bends it about a tenth of a degree, and longer, softer hair bends far more because deflection grows like L³. So air bending is drawn magnified by the factor in the display panel, with a soft limit at 80°. Skin motion is drawn at true scale unless you raise its own magnification. The jaw's effect really is that large: the chin rotates several degrees with every chewing stroke. Press <i>True scale</i> to see the unmagnified field. In the main view hair glyphs are lengthened for visibility; the circular close-up draws them at true length.</p>
+<p class="small">Values marked as estimates (follicle damping, grain angle, canopy coefficient, skin-to-bone attachment weights, wake fraction) are reasoned from the literature, not measured, and are all listed as constants at the top of the source.</p>
+`;
+
+// =====================================================================
+// BOOT
+// =====================================================================
+buildUI();
+figures=FIG_DEFS.map((d,i)=>makeFigure(d,i));
+setCondition(PRESETS.calm.p,'calm'); showExplain(PRESETS.calm.why);
+resize();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
