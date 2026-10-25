@@ -1,5 +1,7 @@
 # Stubble Vector Field
 
+**▶ Play it:** https://hanji-xu.github.io/stubble-vector-field/
+
 Little animated figures whose stubble is a live vector field. Each hair is a damped cantilever anchored to deforming skin, so jaw muscles (chewing, talking, chattering, clenching, yawning) and wind (with turbulence and travelling gusts) both show up as hair motion.
 
 Open `index.html` in any browser. There is nothing to install or build.
