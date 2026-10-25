@@ -6,8 +6,10 @@ Open `index.html` in any browser. There is nothing to install or build.
 
 ## Controls
 
-- **Stubble:** length, area (beard-line reach plus region toggles), softness (effective keratin modulus), and density (hairs/cm²).
-- **Conditions:** 12 presets, or describe your own. With an Anthropic API key (under *Language model settings*), `claude-haiku-4-5` turns the description into strict-JSON force parameters. The key stays in your browser and is sent only to api.anthropic.com. Without a key, a local keyword guesser fills in the same parameters.
+The page has two views.
+
+- **Forecast** (front page): the three heads, a live readout of wind, gusts, jaw activity and peak bend, 12 condition presets, a box to describe your own condition, and two stubble sliders (length and beard area). With an Anthropic API key, `claude-haiku-4-5` turns the description into strict-JSON force parameters. The key stays in your browser and is sent only to api.anthropic.com. Without a key, a local keyword guesser fills in the same parameters.
+- **The Details**: every force parameter as an editable field, the finer stubble settings (regions, softness as effective keratin modulus, density in hairs/cm²), display options (bending and skin magnification, hair glyph length, colour mode), live physics numbers for any one figure, the language model settings, and the full write-up of how the forces are computed.
 
 ## Honest scale
 
