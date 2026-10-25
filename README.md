@@ -4,14 +4,16 @@ Little animated figures whose stubble is a live vector field. Each hair is a dam
 
 Open `index.html` in any browser. There is nothing to install or build.
 
+The page has two views. **Forecast** shows the three heads with the current conditions and the simple controls. **The physics** has the live numbers, every force parameter, display settings, beard regions, the language model key, and the full derivation.
+
 ## Controls
 
-- **Stubble:** length, area (beard-line reach plus region toggles), softness (effective keratin modulus), and density (hairs/cm²).
-- **Conditions:** 12 presets, or describe your own. With an Anthropic API key (under *Language model settings*), `claude-haiku-4-5` turns the description into strict-JSON force parameters. The key stays in your browser and is sent only to api.anthropic.com. Without a key, a local keyword guesser fills in the same parameters.
+- **Stubble:** length, area (beard-line reach), softness (effective keratin modulus), and density (hairs/cm²). Region toggles are on The physics.
+- **Conditions:** 12 presets, or describe your own. With an Anthropic API key (entered on The physics), `claude-haiku-4-5` turns the description into strict-JSON force parameters. The key stays in your browser and is sent only to api.anthropic.com. Without a key, a local keyword guesser fills in the same parameters.
 
 ## Honest scale
 
-Short stubble barely bends in wind (about 0.1° at 10 m/s for 3 mm hair), so air bending is drawn magnified and the factor is always on screen. Skin motion is drawn at true scale. *True scale* shows the raw field.
+Short stubble barely bends in wind (about 0.1° at 10 m/s for 3 mm hair), so air bending is drawn magnified and the factor is always on screen. Hairs are drawn at true length and skin motion at true scale. *Show true bending* shows the raw field.
 
 ## Physics
 
