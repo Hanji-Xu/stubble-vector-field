@@ -3,237 +3,257 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Stubble Vector Field</title>
+<title>Stubble Field</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
 <style>
 :root{
-  --navy:#0a1f44; --navy2:#13305f; --blue:#1d5fd1; --page:#eef2f7; --card:#ffffff;
-  --ink:#0d1b33; --muted:#5b6b82; --line:#dbe2ec;
-  --wind:#1f6fd1; --muscle:#de5a2b; --hair:#2b2621;
-  --sky1:#1f5fb8; --sky2:#79b1ea;
-  --head:"Barlow Condensed","Arial Narrow",Impact,sans-serif;
+  --navy:#0a1f3c; --navy-2:#13315c; --blue:#1f6fd1; --sky-1:#cfe2f7; --sky-2:#f4f8fc;
+  --page:#eef2f7; --card:#ffffff; --ink:#0f1b2d; --muted:#5d6b7e; --line:#dbe3ee; --chrome:#e7ecf3;
+  --wind:#1f6fd1; --muscle:#de5a2b;
+  --font:"Archivo",ui-sans-serif,-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;
 }
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--page);color:var(--ink);
-  font:15px/1.5 Barlow,ui-sans-serif,-apple-system,"Helvetica Neue",Arial,sans-serif}
-button{font:inherit;color:inherit;cursor:pointer}
-[hidden]{display:none!important}
+html,body{margin:0;background:var(--page);color:var(--ink);font:14px/1.45 var(--font)}
+a{color:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
 
-/* top bar */
-.bar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:24px;height:56px;padding:0 24px;background:var(--navy);color:#fff}
-.brand{font-family:var(--head);font-weight:800;font-size:22px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
-.brand span{font-weight:600;opacity:.65;margin-left:6px}
-.tabs{display:flex;gap:4px;margin-left:auto}
-.tab{background:none;border:0;color:#c9d6ea;font-family:var(--head);font-weight:700;font-size:16px;letter-spacing:.06em;text-transform:uppercase;padding:17px 12px 14px;border-bottom:3px solid transparent}
-.tab:hover{color:#fff}
-.tab.on{color:#fff;border-bottom-color:#fff}
+/* ---------- top bar ---------- */
+.topbar{background:var(--navy);color:#fff}
+.topbar .wrap{display:flex;align-items:center;gap:22px;height:58px}
+.brand{font-weight:900;font-stretch:72%;font-size:24px;letter-spacing:.02em;text-transform:uppercase;font-style:italic;text-decoration:none;white-space:nowrap}
+.brand b{color:#7fb6ff;font-weight:900}
+.nav{display:flex;gap:4px;margin-left:auto}
+.nav a{font-weight:700;font-stretch:85%;text-transform:uppercase;letter-spacing:.06em;font-size:13px;text-decoration:none;
+  padding:8px 14px;border-radius:999px;color:#c9d6ea}
+.nav a:hover{color:#fff}
+.nav a.on{background:#fff;color:var(--navy)}
+.live{display:flex;align-items:center;gap:6px;font-size:12px;color:#9fb2cf;white-space:nowrap}
+.live i{width:8px;height:8px;border-radius:50%;background:#43d17a;box-shadow:0 0 0 3px rgba(67,209,122,.22)}
 
-/* hero */
-.hero{position:relative;color:#fff;background:linear-gradient(180deg,var(--sky1),var(--sky2));transition:background 1.2s;padding:22px 24px 0}
-.now{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;max-width:1180px;margin:0 auto}
-.eyebrow{font-family:var(--head);font-weight:700;font-size:14px;letter-spacing:.12em;text-transform:uppercase;opacity:.85}
-.reading{display:flex;align-items:baseline;gap:10px;margin-top:2px}
-.reading b{font-family:var(--head);font-weight:800;font-size:88px;line-height:.9;letter-spacing:-.01em}
-.reading small{font-family:var(--head);font-weight:700;font-size:26px;opacity:.9}
-.sub{font-size:17px;font-weight:500;margin-top:6px}
-.why{font-size:14px;opacity:.85;max-width:520px;margin-top:4px}
-.side{text-align:right;min-width:190px}
-.side .num{font-family:var(--head);font-weight:800;font-size:44px;line-height:1}
-.side .lbl{font-size:13px;opacity:.85}
-.side .tag{display:inline-block;margin-top:10px;font-size:12px;font-weight:600;background:rgba(255,255,255,.16);border-radius:99px;padding:3px 10px}
-.stage-wrap{position:relative;height:min(58vh,560px);min-height:300px;max-width:1180px;margin:0 auto}
-#stage{position:absolute;inset:0;width:100%;height:100%}
-.legend{position:absolute;left:0;bottom:14px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none}
-.legend span{font-size:12px;font-weight:600;background:rgba(10,31,68,.35);border-radius:99px;padding:3px 10px}
-.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
-
-/* content */
-main{max-width:1180px;margin:0 auto;padding:0 24px 48px}
-.card{background:var(--card);border-radius:14px;box-shadow:0 1px 2px rgba(13,27,51,.06),0 6px 24px rgba(13,27,51,.06);padding:18px 20px}
-h2{font-family:var(--head);font-weight:800;font-size:22px;letter-spacing:.03em;text-transform:uppercase;margin:0 0 12px}
-h2 .small{font-family:Barlow,sans-serif;text-transform:none;letter-spacing:0;font-weight:500}
-.strip{margin-top:-1px;position:relative}
-.tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
-.tile{text-align:left;background:var(--page);border:0;border-radius:10px;padding:10px 10px 9px}
-.tile:hover{background:#e2e9f3}
-.tile .t{font-family:var(--head);font-weight:700;font-size:16px;letter-spacing:.02em;text-transform:uppercase;line-height:1.1}
-.tile .m{font-size:12px;color:var(--muted);margin-top:4px;white-space:nowrap}
-.tile .gauge{height:4px;border-radius:2px;background:#cfd9e6;margin-top:8px;overflow:hidden}
-.tile .gauge i{display:block;height:100%;border-radius:2px}
-.tile.on{background:var(--navy);color:#fff}
-.tile.on .m{color:#c9d6ea}
-.tile.on .gauge{background:rgba(255,255,255,.2)}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
-textarea,input[type=text],input[type=password],input[type=number],select{font:inherit;color:var(--ink);background:var(--page);border:1px solid transparent;border-radius:10px;padding:10px 12px;width:100%}
-textarea:focus,input:focus,select:focus{outline:2px solid var(--blue);outline-offset:0;background:#fff}
-textarea{resize:vertical;min-height:84px}
-.go{margin-top:10px;width:100%;background:var(--blue);color:#fff;border:0;border-radius:99px;padding:11px 16px;font-family:var(--head);font-weight:700;font-size:17px;letter-spacing:.08em;text-transform:uppercase}
-.go:hover{background:#1750b3}
-.go:disabled{opacity:.6}
-.status{color:var(--muted);font-size:13px;margin-top:8px;min-height:1em}
-.link{background:none;border:0;padding:0;color:var(--blue);font-weight:600;text-decoration:underline;text-underline-offset:2px}
-.ctl{margin:12px 0}
-.ctl label{display:flex;justify-content:space-between;gap:10px;font-weight:600;font-size:14px}
-.ctl label span:last-child{color:var(--muted);font-weight:500;font-variant-numeric:tabular-nums}
-input[type=range]{width:100%;margin:6px 0 0;accent-color:var(--navy)}
-.toggle{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:14px;font-weight:600}
-.toggle input{width:18px;height:18px;accent-color:var(--navy)}
-.foot{color:var(--muted);font-size:13px;margin-top:18px}
-
-/* physics page */
-.ptitle{padding:26px 0 14px}
-.ptitle h1{font-family:var(--head);font-weight:800;font-size:44px;letter-spacing:.02em;text-transform:uppercase;margin:0;line-height:1}
-.ptitle p{color:var(--muted);margin:6px 0 0;max-width:720px}
-.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.span2{grid-column:1/-1}
-.seg{display:inline-flex;background:var(--page);border-radius:99px;padding:3px;margin-bottom:10px}
-.seg button{border:0;background:none;border-radius:99px;padding:5px 14px;font-weight:600;font-size:13px}
-.seg button.on{background:var(--navy);color:#fff}
-table.read{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
-table.read td{padding:5px 0;border-bottom:1px solid var(--line)}
-table.read td:last-child{text-align:right;font-weight:600}
-.params{display:grid;grid-template-columns:1fr 110px;gap:6px 10px;align-items:center;font-size:14px}
-.params input,.params select{padding:6px 8px}
-.params .u{color:var(--muted)}
-.regions{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px}
-.regions input{accent-color:var(--navy)}
-.row{display:flex;gap:10px;align-items:center;margin-top:10px}
+/* ---------- shared ---------- */
+.page{display:none;padding:22px 0 50px}
+.page.on{display:block}
+.card{background:var(--card);border-radius:18px;box-shadow:0 1px 2px rgba(10,31,60,.06),0 6px 24px rgba(10,31,60,.06)}
+.eyebrow{font-weight:800;font-stretch:80%;text-transform:uppercase;letter-spacing:.1em;font-size:12px;color:var(--muted);margin:0 0 10px}
+h2.big{font-weight:900;font-stretch:75%;text-transform:uppercase;font-size:30px;line-height:1;margin:0 0 4px;letter-spacing:.01em}
+button{font:inherit;color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:8px 16px;cursor:pointer;font-weight:700}
+button:hover{border-color:#9fb0c6}
+button.on,button.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+button.primary:hover{background:var(--navy-2)}
+textarea,input[type=text],input[type=password],input[type=number],select{font:inherit;color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;width:100%}
+textarea{resize:vertical;min-height:64px}
+.row{display:flex;gap:8px;align-items:center;margin-top:10px}
 .row>*{flex:1}
-.pill{background:var(--page);border:0;border-radius:99px;padding:9px 14px;font-weight:600}
-.pill.on{background:var(--navy);color:#fff}
-.small{font-size:13px;color:var(--muted)}
-.doc{font-size:14px;color:#26344d}
-.doc code{font-size:13px;background:var(--page);padding:0 4px;border-radius:4px}
+.status{color:var(--muted);font-size:12px;margin-top:8px;min-height:1em}
+.ctl{margin:14px 0}
+.ctl label{display:flex;justify-content:space-between;align-items:baseline;font-weight:700;font-size:13px}
+.ctl label span:last-child{color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin:8px 0 0;accent-color:var(--navy)}
+.small{font-size:12px;color:var(--muted)}
+
+/* ---------- forecast page ---------- */
+.hero{overflow:hidden;background:linear-gradient(180deg,var(--sky-1) 0%,var(--sky-2) 78%)}
+.fc{display:grid;grid-template-columns:auto 1fr auto;gap:28px;align-items:end;padding:22px 26px 0}
+.fc-main .cond{font-weight:800;font-stretch:80%;text-transform:uppercase;letter-spacing:.08em;font-size:13px;color:var(--navy-2)}
+.fc-num{display:flex;align-items:flex-start;gap:8px;line-height:.85}
+.fc-num .n{font-weight:900;font-stretch:70%;font-size:96px;letter-spacing:-.02em;color:var(--navy)}
+.fc-num .u{font-weight:800;font-size:20px;margin-top:10px;color:var(--navy)}
+.fc-num svg{width:34px;height:34px;margin-top:14px;color:var(--blue);transition:transform .4s}
+.fc-sub{font-weight:600;color:var(--navy-2);margin-top:6px}
+.fc-why{font-size:13px;color:var(--muted);max-width:44ch;align-self:end;padding-bottom:4px}
+.stats{display:flex;gap:10px}
+.stat{background:rgba(255,255,255,.72);border-radius:12px;padding:8px 12px;min-width:98px}
+.stat .k{font-size:11px;font-weight:800;font-stretch:80%;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.stat .v{font-weight:800;font-size:18px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.stage-wrap{position:relative}
+#stage{display:block;width:100%;aspect-ratio:2.5/1;max-height:62vh;cursor:pointer;
+  -webkit-mask-image:linear-gradient(180deg,#000 82%,transparent 100%);mask-image:linear-gradient(180deg,#000 82%,transparent 100%)}
+.hero-foot{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding:4px 26px 18px}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--muted);font-weight:600}
+.legend i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:6px;border-radius:2px}
+.scale-note{margin-left:auto;font-size:12px;color:var(--navy-2);font-weight:700;background:rgba(255,255,255,.75);border-radius:999px;padding:5px 12px}
+.hero-foot button{padding:6px 14px;font-size:13px}
+
+.tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:18px 0}
+.tile{display:flex;flex-direction:column;align-items:center;gap:6px;border-radius:14px;padding:14px 6px 12px;border:none;
+  background:var(--card);box-shadow:0 1px 2px rgba(10,31,60,.06);font-weight:800;font-stretch:85%;text-transform:uppercase;letter-spacing:.04em;font-size:12px}
+.tile svg{width:30px;height:30px;color:var(--blue)}
+.tile:hover{box-shadow:0 0 0 1.5px var(--line) inset}
+.tile.on{background:var(--navy);color:#fff}
+.tile.on svg{color:#7fb6ff}
+
+.duo{display:grid;grid-template-columns:1.15fr 1fr;gap:18px}
+.duo .card{padding:22px 24px}
+.explain{display:none}
+.daysbig{font-weight:900;font-stretch:72%;font-size:44px;line-height:1;color:var(--navy)}
+.daysbig small{font-size:16px;font-weight:700;color:var(--muted);font-stretch:100%}
+.more{display:flex;justify-content:center;margin-top:26px}
+.more a{font-weight:800;font-stretch:85%;text-transform:uppercase;letter-spacing:.08em;text-decoration:none;color:var(--navy);
+  border-bottom:2px solid var(--navy);padding-bottom:2px}
+
+/* ---------- details page ---------- */
+.dhead{margin:6px 0 18px}
+.dhead p{color:var(--muted);margin:6px 0 0;max-width:70ch}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.grid2 .card{padding:20px 22px}
+.grid2 .wide{grid-column:1/-1}
+.card h3{font-weight:900;font-stretch:78%;text-transform:uppercase;font-size:18px;letter-spacing:.02em;margin:0 0 10px}
+.params{display:grid;grid-template-columns:1fr 104px;gap:6px 10px;align-items:center;font-size:13px}
+.params input,.params select{padding:5px 8px}
+.params .u{color:var(--muted)}
+.regions{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;margin-top:4px}
+.who{display:flex;gap:6px;margin-bottom:10px}
+.who button{padding:5px 12px;font-size:12px}
+table.read{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+table.read td{padding:5px 0;border-bottom:1px solid var(--chrome)}
+table.read td:last-child{text-align:right;font-weight:700}
+.doc{font-size:13px;color:#2b3647}
+.doc code{font-size:12px;background:var(--chrome);padding:0 4px;border-radius:4px}
 .doc table{border-collapse:collapse;width:100%;margin:8px 0}
-.doc td,.doc th{border-bottom:1px solid var(--line);padding:6px 6px;text-align:left;vertical-align:top}
-@media (max-width:860px){
-  .bar{padding:0 16px;gap:10px}.brand span{display:none}.tab{padding:17px 8px 14px;font-size:15px}
-  .hero{padding:16px 16px 0}.reading b{font-size:64px}.side{display:none}
-  .stage-wrap{height:56vw;min-height:200px}
-  .tiles{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
-  main{padding:0 16px 40px}
-  .grid2,.pgrid{grid-template-columns:1fr}
+.doc td,.doc th{border-bottom:1px solid var(--chrome);padding:5px 6px;text-align:left;vertical-align:top}
+
+@media (max-width:900px){
+  .fc{grid-template-columns:1fr;gap:12px}
+  .fc-num .n{font-size:72px}
+  .stats{flex-wrap:wrap}
+  .tiles{grid-template-columns:repeat(12,96px);overflow-x:auto;padding-bottom:6px}
+  .duo,.grid2{grid-template-columns:1fr}
+  .scale-note{margin-left:0}
+}
+@media (max-width:560px){
+  .wrap{padding:0 16px}
+  .brand{font-size:19px}
+  .live{display:none}
+  .nav a{padding:7px 10px;font-size:12px}
+  .fc{padding:18px 18px 0}
+  .fc-why{display:none!important}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .stat{min-width:0;padding:6px 8px}
+  .stat .v{font-size:14px}
+  .hero-foot{padding:4px 18px 16px}
+  .legend{flex-wrap:wrap;gap:8px 14px}
 }
 </style>
 </head>
 <body>
-<div class="bar">
-  <div class="brand">Stubble<span>vector field</span></div>
-  <nav class="tabs">
-    <button class="tab on" data-page="forecast">Forecast</button>
-    <button class="tab" data-page="physics">The physics</button>
-  </nav>
-</div>
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="#">Stubble<b>Field</b></a>
+    <nav class="nav">
+      <a href="#" id="navForecast" class="on">Forecast</a>
+      <a href="#details" id="navDetails">The Details</a>
+    </nav>
+    <span class="live"><i></i>Live physics</span>
+  </div>
+</header>
 
-<div id="pageForecast">
-  <section class="hero" id="hero">
-    <div class="now">
-      <div>
-        <div class="eyebrow" id="nowLabel">Right now</div>
-        <div class="reading"><b id="nowWind">0.2</b><small>m/s wind</small></div>
-        <div class="sub" id="nowSub"></div>
-        <div class="why" id="explain"></div>
+<!-- ================= PAGE 1: FORECAST ================= -->
+<main class="page on wrap" id="pageForecast">
+  <section class="card hero">
+    <div class="fc">
+      <div class="fc-main">
+        <div class="cond" id="fcCond">Calm</div>
+        <div class="fc-num"><span class="n" id="fcNum">0.2</span><span class="u">m/s</span>
+          <svg id="fcArrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></div>
+        <div class="fc-sub" id="fcSub">Still air · jaw at rest</div>
       </div>
-      <div class="side">
-        <div class="num" id="nowBend">0°</div>
-        <div class="lbl">peak true bend, centre face</div>
-        <div class="tag" id="nowScale"></div>
+      <div class="fc-why explain" id="explain"></div>
+      <div class="stats">
+        <div class="stat"><div class="k">Gusts</div><div class="v" id="stGust">–</div></div>
+        <div class="stat"><div class="k">Jaw</div><div class="v" id="stJaw">–</div></div>
+        <div class="stat"><div class="k">Peak bend</div><div class="v" id="stBend">–</div></div>
       </div>
     </div>
-    <div class="stage-wrap" id="stageWrap">
-      <canvas id="stage"></canvas>
+    <div class="stage-wrap"><canvas id="stage" aria-label="Three animated heads with live stubble"></canvas></div>
+    <div class="hero-foot">
       <div class="legend">
-        <span><i style="background:var(--hair)"></i>at rest</span>
+        <span><i style="background:var(--ink)"></i>at rest</span>
         <span><i style="background:var(--wind)"></i>bent by air</span>
-        <span><i style="background:var(--muscle)"></i>moved by the jaw</span>
+        <span><i style="background:var(--muscle)"></i>carried by moving skin</span>
       </div>
+      <span class="scale-note" id="scaleNote"></span>
+      <button id="trueBtn">True scale</button>
+      <button id="pauseBtn">Pause</button>
     </div>
   </section>
 
-  <main>
-    <section class="card strip">
-      <h2>Conditions</h2>
-      <div class="tiles" id="presets"></div>
+  <div class="tiles" id="presets"></div>
+
+  <div class="duo">
+    <section class="card">
+      <p class="eyebrow">Describe your own</p>
+      <textarea id="condText" placeholder="e.g. “arguing on a ferry deck in a crosswind” or “eating jerky in front of a desk fan”"></textarea>
+      <div class="row"><button class="primary" id="interpretBtn">Guess the forces</button></div>
+      <div class="status" id="llmStatus"></div>
     </section>
+    <section class="card">
+      <p class="eyebrow">Your stubble</p>
+      <div class="daysbig" id="daysBig">8 <small>days since a shave</small></div>
+      <div class="ctl"><label><span>Length</span><span id="vLen"></span></label><input type="range" id="sLen" min="0.3" max="12" step="0.1" value="3"></div>
+      <div class="ctl"><label><span>Beard area</span><span id="vCov"></span></label><input type="range" id="sCov" min="0" max="1" step="0.01" value="0.6"></div>
+    </section>
+  </div>
+  <div class="more"><a href="#details">The details: every force, knob and equation →</a></div>
+</main>
 
-    <div class="grid2">
+<!-- ================= PAGE 2: DETAILS ================= -->
+<main class="page wrap" id="pageDetails">
+  <div class="dhead">
+    <h2 class="big">The details</h2>
+    <p>Everything the forecast page hides: the raw forces, the finer stubble settings, how the field is drawn, live numbers for one figure and the full physics write-up. The simulation keeps running while you are here.</p>
+  </div>
+  <div class="grid2">
+    <section class="card">
+      <h3>Forces in play</h3>
+      <div class="params" id="params"></div>
+      <p class="small">These are what the presets and the language model set. Edit any value to drive the field directly.</p>
+    </section>
+    <div style="display:grid;gap:18px">
       <section class="card">
-        <h2>Describe your own</h2>
-        <textarea id="condText" placeholder="“Arguing on a ferry deck in a crosswind” or “eating jerky in front of a desk fan”"></textarea>
-        <button class="go" id="interpretBtn">Forecast it</button>
-        <div class="status" id="llmStatus"></div>
-        <div class="small">Uses a local keyword guesser. To have Claude read it instead, add an API key on <button class="link" data-page="physics">The physics</button>.</div>
-      </section>
-
-      <section class="card">
-        <h2>Your stubble</h2>
-        <div class="ctl"><label><span>Length</span><span id="vLen"></span></label><input type="range" id="sLen" min="0.3" max="12" step="0.1" value="3"></div>
-        <div class="ctl"><label><span>Area</span><span id="vCov"></span></label><input type="range" id="sCov" min="0" max="1" step="0.01" value="0.6"></div>
+        <h3>Stubble, fine-tuned</h3>
+        <div class="regions" id="regions"></div>
         <div class="ctl"><label><span>Softness</span><span id="vSoft"></span></label><input type="range" id="sSoft" min="0" max="1" step="0.01" value="0.4"></div>
         <div class="ctl"><label><span>Density</span><span id="vDen"></span></label><input type="range" id="sDen" min="5" max="100" step="1" value="40"></div>
-        <label class="toggle"><input type="checkbox" id="trueChk"> Show true bending (unmagnified)</label>
-      </section>
-    </div>
-    <p class="foot">Real stubble barely bends in wind, so air bending is drawn magnified and the factor is always shown above. Hairs are drawn at true length and skin motion at true scale. Every equation and constant is on <button class="link" data-page="physics">The physics</button>.</p>
-  </main>
-</div>
-
-<div id="pagePhysics" hidden>
-  <main>
-    <div class="ptitle">
-      <h1>The physics</h1>
-      <p>Each hair is a damped cantilever rooted in moving skin. The heads keep running while you read, so the numbers below are live.</p>
-    </div>
-    <div class="pgrid">
-      <section class="card">
-        <h2>Live physics</h2>
-        <div class="seg" id="figPick"><button data-f="0">Left</button><button data-f="1" class="on">Centre</button><button data-f="2">Right</button></div>
-        <table class="read" id="readout"></table>
       </section>
       <section class="card">
-        <h2>Forces in play</h2>
-        <div class="params" id="params"></div>
-        <p class="small">These are what the conditions and the language model set. Edit any value to drive the field directly.</p>
-      </section>
-      <section class="card">
-        <h2>Display</h2>
+        <h3>Display</h3>
         <div class="ctl"><label><span>Bending magnification</span><span id="vMag"></span></label><input type="range" id="sMag" min="0" max="3.5" step="0.01" value="2"></div>
         <div class="ctl"><label><span>Skin motion magnification</span><span id="vSkin"></span></label><input type="range" id="sSkin" min="1" max="4" step="0.1" value="1"></div>
-        <div class="ctl"><label><span>Hair glyph length</span><span id="vGlyph"></span></label><input type="range" id="sGlyph" min="1" max="6" step="0.5" value="1"></div>
-        <div class="row">
-          <select id="colorMode">
-            <option value="source">Colour: what moves it</option>
-            <option value="bend">Colour: air bending only</option>
-            <option value="skin">Colour: skin motion only</option>
-            <option value="ink">Colour: plain ink</option>
-          </select>
-          <button class="pill" id="pauseBtn">Pause</button>
-        </div>
-      </section>
-      <section class="card">
-        <h2>Beard regions</h2>
-        <div class="regions" id="regions"></div>
-        <h2 style="margin-top:22px">Language model</h2>
-        <div class="ctl">
-          <label><span>Anthropic API key</span><span>optional</span></label>
-          <input type="password" id="apiKey" placeholder="sk-ant-…  (blank = local keyword guesser)" autocomplete="off">
-        </div>
-        <div class="ctl">
-          <label><span>Model</span><span></span></label>
-          <input type="text" id="model" value="claude-haiku-4-5">
-        </div>
-        <label class="toggle" style="margin-top:4px"><input type="checkbox" id="rememberKey"> Remember key in this browser</label>
-        <p class="small">The key is sent only to api.anthropic.com, straight from this page. Without a key, a local keyword guesser fills in the same parameters.</p>
-      </section>
-      <section class="card span2">
-        <h2>How the forces are computed</h2>
-        <div class="doc" id="doc"></div>
+        <div class="ctl"><label><span>Hair glyph length</span><span id="vGlyph"></span></label><input type="range" id="sGlyph" min="1" max="6" step="0.5" value="1.5"></div>
+        <select id="colorMode">
+          <option value="source">Colour: what moves it</option>
+          <option value="bend">Colour: air bending only</option>
+          <option value="skin">Colour: skin motion only</option>
+          <option value="ink">Colour: plain ink</option>
+        </select>
       </section>
     </div>
-  </main>
-</div>
+    <section class="card">
+      <h3>Live physics <span class="small" id="readWho"></span></h3>
+      <div class="who" id="who"></div>
+      <table class="read" id="readout"></table>
+    </section>
+    <section class="card">
+      <h3>Language model</h3>
+      <div class="ctl">
+        <label><span>Anthropic API key</span><span>optional</span></label>
+        <input type="password" id="apiKey" placeholder="sk-ant-…  (blank = local keyword guesser)" autocomplete="off">
+      </div>
+      <div class="ctl">
+        <label><span>Model</span><span></span></label>
+        <input type="text" id="model" value="claude-haiku-4-5">
+      </div>
+      <label class="small"><input type="checkbox" id="rememberKey"> Remember key in this browser</label>
+      <p class="small">The key is sent only to api.anthropic.com, straight from this page. Without a key, a local keyword guesser fills in the same parameters.</p>
+    </section>
+    <section class="card wide">
+      <h3>How the forces are computed</h3>
+      <div class="doc" id="doc"></div>
+    </section>
+  </div>
+</main>
 
 <script>
 'use strict';
@@ -324,7 +344,7 @@ const PRESETS = {
 // ---------- state ----------
 const stubble = {lengthMM:3, coverage:0.6, softness:0.4, density:40,
   regions:{moustache:true, chin:true, cheeks:true, jaw:true, neck:true}};
-const display = {mag:100, skinGain:1, glyph:1, color:'source', paused:false};
+const display = {mag:100, skinGain:1, glyph:1.5, color:'source', paused:false};
 let cond = Object.assign({}, PRESETS.calm.p);
 let activePreset = 'calm';
 let simT = 0;
@@ -577,11 +597,11 @@ function gustNow(t){ // for HUD: gust speed at stage centre
 // FIGURES AND HAIRS
 // =====================================================================
 const FIG_DEFS = [
-  {x:-0.52, yaw:-38, shirt:'#7d8e7a', seed:11, s:1.00},
-  {x: 0.00, yaw:  8, shirt:'#b37a5b', seed:23, s:1.04},
-  {x: 0.52, yaw: 46, shirt:'#5c6f8f', seed:37, s:0.97}
+  {x:-0.27, yaw:-38, seed:11, s:1.00},
+  {x: 0.00, yaw:  8, seed:23, s:1.04},
+  {x: 0.27, yaw: 46, seed:37, s:0.97}
 ];
-const HEAD_Y = 0.57;  // head centre height above ground (sets the world frame; bodies are not drawn)
+const HEAD_Y = 0.57;  // head centre height (world y; only the heads and necks are drawn)
 let figures=[];
 let selected=1;
 
@@ -914,18 +934,15 @@ function canopyCoef(){
 // RENDERING
 // =====================================================================
 const stage=document.getElementById('stage'), ctx=stage.getContext('2d');
-let DPR=1, W=0, Hh=0, view={S:800, ox:0, oy:0, cy:0, panels:[0,0,0]};
-// Framing: each head gets a third of the stage. Local head space runs from
-// +0.125 m (crown) to -0.22 m (neck, faded out below -0.165 m).
-const FRAME_TOP=0.125, FRAME_BOT=-0.235, FADE0=-0.15, FADE1=-0.225;
+let DPR=1, W=0, Hh=0, view={S:800, ox:0, oy:0};
 function resize(){
   DPR=Math.min(window.devicePixelRatio||1,2);
   const r=stage.getBoundingClientRect(); W=r.width; Hh=r.height;
-  if(!W||!Hh) return;
   stage.width=Math.round(W*DPR); stage.height=Math.round(Hh*DPR);
-  const S=Math.min(Hh/(FRAME_TOP-FRAME_BOT), (W/3)/0.235);
-  const cy=Hh-S*(-FRAME_BOT);           // screen y of the head centres
-  view={S, cy, oy:cy+S*HEAD_Y, ox:0, panels:[W/6,W/2,5*W/6]};
+  // frame the three heads: world x -0.43..0.43, y 0.40 (canvas bottom, where the
+  // necks fade out) up to 0.735. Necks run off the bottom under a CSS fade mask.
+  const S=Math.min(Hh/0.335, W/0.86);
+  view={S, ox:W*0.5, oy:Hh+S*0.40};
 }
 window.addEventListener('resize',resize);
 
@@ -984,20 +1001,7 @@ function drawHead(c, F, V, glyph, lw){
   // neck
   const ng=F.grids[1], np=[];
   for(let k=0;k<ng.n;k++) np.push([X(ng.wp[k*3]),Y(ng.wp[k*3+1])]);
-  {
-    // the neck continues below the simulated part and fades out (no torso is drawn)
-    // and flares into the top of the shoulders, which the fade then dissolves
-    const s=F.scale, yb=F.Hy+NECK.yBot*s+0.004;
-    let xl=1e9, xr=-1e9; for(const q of np){ if(q[1]>Y(yb)-2){ xl=Math.min(xl,q[0]); xr=Math.max(xr,q[0]); } }
-    const hw=(xr-xl)/2, xc=(xr+xl)/2, y0=Y(yb), y1=Y(F.Hy+FRAME_BOT*s), sh=V.S*0.08*s;
-    c.beginPath(); c.moveTo(xc-hw,y0-4); c.lineTo(xc+hw,y0-4);
-    c.bezierCurveTo(xc+hw,y1-sh*0.25,xc+hw+sh*0.6,y1-sh*0.18,xc+hw+sh,y1);
-    c.lineTo(xc-hw-sh,y1);
-    c.bezierCurveTo(xc-hw-sh*0.6,y1-sh*0.18,xc-hw,y1-sh*0.25,xc-hw,y0-4); c.closePath();
-    c.fillStyle='#e3c4a9'; c.fill();
-  }
-  const nh=hull(np);
-  c.beginPath(); nh.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1])); c.closePath(); c.fillStyle='#e3c4a9'; c.fill();
+  fillPoly(c, hull(np), '#e3c4a9', '#c9a88c');
   drawHairs(c,F,V,glyph,lw,1);
   // head silhouette
   const fg=F.full, hp=[];
@@ -1064,27 +1068,23 @@ function drawHairs(c,F,V,glyph,lw,gridSel){
 }
 
 function render(){
-  if(!W||!Hh) return;
+  if(!W||!Hh) return;                     // forecast page hidden
   ctx.setTransform(DPR,0,0,DPR,0,0);
-  ctx.clearRect(0,0,W,Hh);            // transparent: the sky behind is CSS
-  const lw=Math.max(0.8, view.S*0.00055);
+  ctx.clearRect(0,0,W,Hh);                // transparent: the sky gradient shows through
   for(const F of figures){
-    const V={S:view.S, oy:view.oy, ox:view.panels[F.idx]-view.S*F.x};
-    drawHead(ctx,F,V,display.glyph,lw);
+    if(F.idx===selected){                 // soft halo behind the figure the details page reads out
+      const cx=view.ox+view.S*F.x, cy=view.oy-view.S*HEAD_Y, r=view.S*0.17;
+      const g=ctx.createRadialGradient(cx,cy,r*0.2,cx,cy,r);
+      g.addColorStop(0,'rgba(255,255,255,.85)'); g.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.fillStyle=g; ctx.fillRect(cx-r,cy-r,2*r,2*r);
+    }
+    drawHead(ctx,F,view,display.glyph,0.8);
   }
-  // fade the necks into the sky
-  const y0=view.cy-view.S*FADE0, y1=view.cy-view.S*FADE1;
-  const g=ctx.createLinearGradient(0,y0,0,y1);
-  g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,1)');
-  ctx.globalCompositeOperation='destination-out';
-  ctx.fillStyle=g; ctx.fillRect(0,y0,W,Hh-y0);
-  ctx.globalCompositeOperation='source-over';
 }
 
 // =====================================================================
 // HUD + READOUTS
 // =====================================================================
-
 function dirWord(deg){
   const d=((deg%360)+360)%360;
   const names=['from the left','from front-left','from the front','from front-right','from the right','from back-right','from behind','from back-left'];
@@ -1094,34 +1094,28 @@ function modeWord(){
   const m=cond.jaw_mode, r=cond.jaw_rate_hz;
   return {rest:'jaw at rest', chew:`chewing ${r.toFixed(1)} Hz`, talk:`talking ${r.toFixed(1)} syll/s`, chatter:`teeth chattering ${r.toFixed(0)} Hz`, clench:'clenching', yawn:'yawning'}[m];
 }
+const JAW_SHORT={rest:'Rest',chew:'Chewing',talk:'Talking',chatter:'Chatter',clench:'Clench',yawn:'Yawning'};
 let lastStats={maxBend:0,meanBend:0,maxSkin:0,uMid:0,Re:0,Cd:0};
-const SIDE=['left','centre','right'];
-function mixHex(a,b,t){const A=parseInt(a.slice(1),16),B=parseInt(b.slice(1),16);
-  const ch=k=>Math.round(((A>>k)&255)+(((B>>k)&255)-((A>>k)&255))*t);
-  return `rgb(${ch(16)},${ch(8)},${ch(0)})`;}
 function updateHud(){
   const g=gustNow(simT), U=cond.wind_speed_ms, mag=display.mag;
-  const label=activePreset?PRESETS[activePreset].label:'Your description';
-  $('nowLabel').textContent='Right now · '+label;
-  $('nowWind').textContent=U<10?U.toFixed(1):U.toFixed(0);
-  const parts=[U>0.3?dirWord(cond.wind_from_deg):'still air'];
-  if(cond.gust_factor>1.05&&U>0.3) parts.push(`gusts to ${(U*cond.gust_factor).toFixed(1)} m/s`);
-  if(g>0.2) parts.push('gust passing now');
-  parts.push(modeWord());
-  $('nowSub').textContent=parts.join(' · ');
-  {const d=lastStats.maxBend; $('nowBend').textContent=d<0.001?'<0.001°':d<1?d.toFixed(3)+'°':d.toFixed(1)+'°';}
-  document.querySelector('.side .lbl').textContent=`peak true bend, ${SIDE[selected]} face`;
-  const isTrue=mag===1&&display.skinGain===1;
-  $('nowScale').textContent=isTrue?'Drawn at true scale':
-    `Bending drawn ×${mag<10?mag.toFixed(1):Math.round(mag)}${display.skinGain!==1?` · skin ×${display.skinGain.toFixed(1)}`:''}${display.glyph!==1?` · hairs ${display.glyph}× long`:''}`;
-  // sky: clear blue when calm, slate in a gale
-  const t=clamp(U/18,0,1);
-  const hero=$('hero'); hero.style.setProperty('--sky1',mixHex('#1f5fb8','#2a3950',t)); hero.style.setProperty('--sky2',mixHex('#79b1ea','#71819a',t));
+  $('fcCond').textContent=(activePreset?PRESETS[activePreset].label:'Custom')+' · right now';
+  $('fcNum').textContent=(U+(g>0.2?g:0)).toFixed(1);
+  const arrow=$('fcArrow');
+  if(U<0.5){ arrow.style.opacity=0; }
+  else { // top-down: viewer at the bottom of the screen, air moving along (ex, ez)
+    arrow.style.opacity=1; arrow.style.transform=`rotate(${Math.atan2(wind.ez,wind.ex)*R2D}deg)`; }
+  $('fcSub').textContent=(U<0.5?'Still air':`Wind ${dirWord(cond.wind_from_deg)}`)+' · '+modeWord();
+  const peak=cond.gust_factor>1.01&&U>=0.5?U*cond.gust_factor:0;
+  $('stGust').textContent=peak?`to ${peak.toFixed(0)} m/s`:'none';
+  $('stJaw').textContent=JAW_SHORT[cond.jaw_mode];
+  $('stBend').textContent=fmtDeg(lastStats.maxBend);
+  $('scaleNote').textContent=`Bending ×${mag<10?mag.toFixed(1):Math.round(mag)}${mag===1?' (true scale)':''} · skin ${display.skinGain===1?'true scale':'×'+display.skinGain.toFixed(1)} · hairs ${display.glyph}× long`;
 }
 function fmtDeg(d){ return d<0.01?d.toExponential(1)+'°':d<1?d.toFixed(3)+'°':d.toFixed(1)+'°'; }
 function fmtSci(x,u){ if(x===0) return '0 '+u; const e=Math.floor(Math.log10(Math.abs(x))); const m=x/10**e; return `${m.toFixed(2)}×10${sup(e)} ${u}`; }
 function sup(e){return String(e).split('').map(ch=>'⁰¹²³⁴⁵⁶⁷⁸⁹'['0123456789'.indexOf(ch)]||'⁻').join('');}
 const readout=document.getElementById('readout');
+const WHO=['Left','Middle','Right'];
 function updateReadout(){
   const F=figures[selected]; const H=F.h;
   const E=effectiveE(), L=stubble.lengthMM/1000, D=PHYS.D_HAIR, I=Math.PI*D**4/64, kap=PHYS.KAPPA_COEF*E*I/L;
@@ -1142,6 +1136,8 @@ function updateReadout(){
     ['Peak skin-driven hair rotation', (lastStats.maxSkin*R2D).toFixed(0)+' °/s']
   ];
   readout.innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
+  document.getElementById('readWho').textContent='('+WHO[selected].toLowerCase()+' figure)';
+  document.querySelectorAll('#who button').forEach((b,i)=>b.classList.toggle('on',i===selected));
 }
 
 // =====================================================================
@@ -1170,12 +1166,10 @@ function frame(ts){
   requestAnimationFrame(frame);
 }
 
-function selectFigure(i){
-  selected=i; document.querySelectorAll('#figPick button').forEach(b=>b.classList.toggle('on',+b.dataset.f===i));
-  updateReadout(); updateHud();
-}
 stage.addEventListener('click',e=>{
-  const r=stage.getBoundingClientRect(); selectFigure(Math.min(2,Math.floor((e.clientX-r.left)/(r.width/3))));
+  const r=stage.getBoundingClientRect(), x=(e.clientX-r.left-view.ox)/view.S;
+  let best=0,bd=1e9; figures.forEach((F,i)=>{const d=Math.abs(F.x-x); if(d<bd){bd=d;best=i;}});
+  selected=best; updateReadout(); updateHud();
 });
 
 // =====================================================================
@@ -1185,7 +1179,7 @@ const $=id=>document.getElementById(id);
 function setCondition(p, presetKey){
   cond=sanitize(p);
   activePreset=presetKey||null;
-  document.querySelectorAll('#presets .tile').forEach(b=>b.classList.toggle('on',b.dataset.k===activePreset));
+  document.querySelectorAll('#presets button').forEach(b=>b.classList.toggle('on',b.dataset.k===activePreset));
   rebuildWind(); renderParams();
   for(const F of figures) updateHairMechanics(F);
 }
@@ -1211,23 +1205,14 @@ function renderParams(){
     box.appendChild(lab); box.appendChild(inp);
   }
 }
-function showExplain(text){ $('explain').textContent=text||''; }
+function showExplain(text){ const e=$('explain'); e.style.display=text?'block':'none'; e.textContent=text||''; }
 
-function showPage(name){
-  $('pageForecast').hidden=name!=='forecast'; $('pagePhysics').hidden=name!=='physics';
-  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.page===name));
-  window.scrollTo(0,0); if(name==='forecast') resize();
-}
 function buildUI(){
   const pb=$('presets');
   for(const [k,v] of Object.entries(PRESETS)){
-    const b=document.createElement('button'); b.className='tile'; b.dataset.k=k; b.title=v.why;
-    const q=v.p, jaw=q.jaw_mode!=='rest';
-    const met=[q.wind_speed_ms>0.3?`${q.wind_speed_ms<10?q.wind_speed_ms.toFixed(1):q.wind_speed_ms.toFixed(0)} m/s`:'still air'];
-    if(jaw) met.push(q.jaw_mode);
-    const wW=Math.min(100,q.wind_speed_ms/20*100), jW=jaw?Math.min(100-wW,25+Math.min(1,q.jaw_open_mm/45+q.masseter_bulge_mm/3.5)*35):0;
-    b.innerHTML=`<div class="t">${v.label}</div><div class="m">${met.join(' · ')}</div><div class="gauge"><i style="width:${wW}%;background:var(--wind);float:left"></i><i style="width:${jW}%;background:var(--muscle);float:left"></i></div>`;
-    b.addEventListener('click',()=>{ setCondition(v.p,k); showExplain(v.why); $('llmStatus').textContent=''; updateHud(); });
+    const b=document.createElement('button'); b.className='tile'; b.dataset.k=k;
+    b.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[k]}</svg>${v.label}`;
+    b.addEventListener('click',()=>{ setCondition(v.p,k); showExplain(v.why); $('llmStatus').textContent=''; });
     pb.appendChild(b);
   }
   const rg=$('regions');
@@ -1239,7 +1224,9 @@ function buildUI(){
   const bind=(id,fn,fmt,outId)=>{const el=$(id); const f=()=>{fn(parseFloat(el.value)); $(outId).textContent=fmt();}; el.addEventListener('input',f); f();};
   let reseedT=null; const reseed=()=>{clearTimeout(reseedT); reseedT=setTimeout(()=>{for(const F of figures) seedHairs(F); updateReadout();},120);};
   window.reseed=reseed;
-  bind('sLen',v=>{stubble.lengthMM=v; for(const F of figures) updateHairMechanics(F);},()=>`${stubble.lengthMM.toFixed(1)} mm · ≈${Math.max(0.5,stubble.lengthMM/0.4).toFixed(0)} days`,'vLen');
+  bind('sLen',v=>{stubble.lengthMM=v; for(const F of figures) updateHairMechanics(F);
+    const d=Math.max(0.5,stubble.lengthMM/0.4); $('daysBig').innerHTML=`${d<1?'&lt;1':d.toFixed(0)} <small>${d<1.5?'day':'days'} since a shave</small>`;},
+    ()=>`${stubble.lengthMM.toFixed(1)} mm`,'vLen');
   bind('sCov',v=>{stubble.coverage=v; reseed();},()=>`${Math.round(stubble.coverage*100)}%`,'vCov');
   bind('sSoft',v=>{stubble.softness=v; for(const F of figures) updateHairMechanics(F);},()=>`E ≈ ${(effectiveE()/1e9).toFixed(1)} GPa`,'vSoft');
   bind('sDen',v=>{stubble.density=v; reseed();},()=>`${stubble.density} hairs/cm²`,'vDen');
@@ -1247,14 +1234,8 @@ function buildUI(){
   bind('sSkin',v=>{display.skinGain=v;},()=>`×${display.skinGain.toFixed(1)}`,'vSkin');
   bind('sGlyph',v=>{display.glyph=v;},()=>`×${display.glyph}`,'vGlyph');
   $('colorMode').addEventListener('change',e=>display.color=e.target.value);
-  const syncTrue=()=>{ $('trueChk').checked=display.mag===1&&display.skinGain===1; updateHud(); };
-  $('sMag').addEventListener('input',syncTrue); $('sSkin').addEventListener('input',syncTrue);
-  $('trueChk').addEventListener('change',e=>{ $('sMag').value=e.target.checked?0:2; $('sSkin').value=1;
-    $('sMag').dispatchEvent(new Event('input')); $('sSkin').dispatchEvent(new Event('input')); });
+  $('trueBtn').addEventListener('click',()=>{ $('sMag').value=0; $('sSkin').value=1; $('sMag').dispatchEvent(new Event('input')); $('sSkin').dispatchEvent(new Event('input')); });
   $('pauseBtn').addEventListener('click',e=>{display.paused=!display.paused; e.target.textContent=display.paused?'Play':'Pause'; e.target.classList.toggle('on',display.paused);});
-  document.querySelectorAll('#figPick button').forEach(b=>b.addEventListener('click',()=>selectFigure(+b.dataset.f)));
-  // two pages in one file, switched in script
-  document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
   // key storage
   try{ const k=localStorage.getItem('stubble.apiKey'); if(k){$('apiKey').value=k; $('rememberKey').checked=true;} const m=localStorage.getItem('stubble.model'); if(m) $('model').value=m; }catch(e){}
   $('rememberKey').addEventListener('change',e=>{ try{ if(e.target.checked) localStorage.setItem('stubble.apiKey',$('apiKey').value.trim()); else localStorage.removeItem('stubble.apiKey'); }catch(_){} });
@@ -1263,7 +1244,31 @@ function buildUI(){
   $('interpretBtn').addEventListener('click',interpret);
   $('condText').addEventListener('keydown',e=>{ if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)) interpret(); });
   $('doc').innerHTML=DOC_HTML;
+  const who=$('who');
+  WHO.forEach((n,i)=>{ const b=document.createElement('button'); b.textContent=n; b.addEventListener('click',()=>{selected=i; updateReadout();}); who.appendChild(b); });
+  window.addEventListener('hashchange',route); route();
 }
+// two pages in one document, so the simulation and its state carry across
+function route(){
+  const det=location.hash==='#details';
+  $('pageForecast').classList.toggle('on',!det); $('pageDetails').classList.toggle('on',det);
+  $('navForecast').classList.toggle('on',!det); $('navDetails').classList.toggle('on',det);
+  window.scrollTo(0,0); resize();
+}
+const ICONS={
+  calm:'<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/>',
+  breeze:'<path d="M3 9h11a3 3 0 1 0-3-3M3 15h15a3 3 0 1 1-3 3"/>',
+  gusty:'<path d="M2 8h9a2.5 2.5 0 1 0-2.5-2.5M2 12h17a3 3 0 1 0-3-3M2 16h11a2.5 2.5 0 1 1-2.5 2.5"/>',
+  storm:'<path d="M7 16a4 4 0 1 1 .9-7.9A5 5 0 0 1 17.6 9 3.5 3.5 0 0 1 17 16"/><path d="M12.5 13l-2 4h3l-2 4"/>',
+  cycling:'<circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5l4-7h6l3 7M9.5 9.5l3 7h-7M14 6h2.5l-1 3.5"/>',
+  chewing:'<rect x="4" y="7" width="16" height="10" rx="5"/><path d="M8 7v4M12 7v4M16 7v4M8 17v-3M12 17v-3M16 17v-3"/>',
+  steak:'<path d="M14.5 4a5.5 5.5 0 0 1 3.9 9.4l-4 4a3 3 0 0 1-4.2 0l-.6-.6a3 3 0 0 1 0-4.2l1-1A5.5 5.5 0 0 1 14.5 4z"/><path d="M9 15l-4 4M4.5 17.5l2 2"/>',
+  talking:'<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/>',
+  shiver:'<path d="M12 2v20M4 7l16 10M20 7L4 17M9.5 3.5L12 6l2.5-2.5M9.5 20.5L12 18l2.5 2.5"/>',
+  yawn:'<path d="M4 6h6l-6 7h6M14 12h5l-5 6h5"/>',
+  clench:'<rect x="3" y="8" width="18" height="8" rx="2.5"/><path d="M3 12h18M7.5 8v8M12 8v8M16.5 8v8"/>',
+  pier:'<path d="M3 13h8a2.5 2.5 0 1 0-2.5-2.5M3 17h11a2.5 2.5 0 1 1-2.5 2.5"/><path d="M13 3h8v6h-4l-3 2.5V9h-1z"/>'
+};
 
 // =====================================================================
 // CONDITION -> PARAMETERS  (language model, with a local fallback)
@@ -1299,8 +1304,8 @@ async function interpret(){
   const key=$('apiKey').value.trim(), model=$('model').value.trim()||'claude-haiku-4-5';
   const btn=$('interpretBtn'); btn.disabled=true;
   if(!key){
-    const r=localGuess(text); setCondition(r.params,null); showExplain(r.explanation); updateHud();
-    $('llmStatus').textContent='Guessed locally from keywords. Add an API key on The physics page to use Claude.';
+    const r=localGuess(text); setCondition(r.params,null); showExplain(r.explanation);
+    $('llmStatus').textContent='Guessed locally from keywords (add an API key under Language model settings to use Claude).';
     btn.disabled=false; return;
   }
   $('llmStatus').textContent=`Asking ${model}…`;
@@ -1316,10 +1321,10 @@ async function interpret(){
     const block=(data.content||[]).find(b=>b.type==='text');
     if(!block) throw new Error('no text in the response');
     const p=JSON.parse(block.text);
-    setCondition(p,null); showExplain(p.explanation||''); updateHud();
+    setCondition(p,null); showExplain(p.explanation||'');
     $('llmStatus').textContent=`Parameters from ${model}. Ranges are clamped to the physical limits listed in “Forces in play”.`;
   }catch(err){
-    const r=localGuess(text); setCondition(r.params,null); showExplain(r.explanation); updateHud();
+    const r=localGuess(text); setCondition(r.params,null); showExplain(r.explanation);
     $('llmStatus').textContent=`The model call failed (${err.message}). Used the local keyword guesser instead.`;
   }finally{ btn.disabled=false; }
 }
@@ -1396,7 +1401,7 @@ const DOC_HTML = `
 <tr><td>On the hair</td><td>Air velocity relative to the moving root, cross-flow component only. Drag per length <code>½ρC_d D|u⊥|u⊥</code>, with <code>C_d = 1 + 10 Re^(−2/3)</code> (White, cylinders, Re = |u⊥|D/ν), summed over 4 segments into the moments <code>Q₁, Q₂</code>. Weight and root acceleration (−m(a − g)·L/2) are added. Both are tiny.</td></tr>
 </table>
 <p><b>Stubble controls.</b> Length sets <code>L</code> (±15% per hair, growth about 0.4 mm/day). Softness sets the effective modulus from ${PHYS.E_STIFF/1e9} GPa (dry, coarse) down to ${PHYS.E_SOFT/1e9} GPa. Dry keratin is about 3–5 GPa and wet keratin about 1.5–2.5 GPa; the lowest values stand in for a compliant follicle. Wetness lowers it by up to ${PHYS.WET_E_DROP*100}%. Density is follicles per cm² (typical beards are about 20–80), and hairs are seeded uniformly by true skin area. Area moves the cheek line, sideburns and neckline and toggles regions. Diameter is ${PHYS.D_HAIR*1e6} µm ±10%, damping ratio ζ = ${PHYS.ZETA}.</p>
-<p><b>What you are looking at.</b> Short stubble is very stiff. At 3 mm a 10 m/s wind bends it about a tenth of a degree, and longer, softer hair bends far more because deflection grows like L³. So air bending is drawn magnified by the factor in the display panel, with a soft limit at 80°. Skin motion is drawn at true scale unless you raise its own magnification. The jaw's effect really is that large: the chin rotates several degrees with every chewing stroke. Tick <i>Show true bending</i> to see the unmagnified field. Hairs are drawn at true length unless you raise <i>Hair glyph length</i> in Display. Only the head and neck are simulated; the neck is faded out below the simulated part.</p>
+<p><b>What you are looking at.</b> Short stubble is very stiff. At 3 mm a 10 m/s wind bends it about a tenth of a degree, and longer, softer hair bends far more because deflection grows like L³. So air bending is drawn magnified by the factor in the display panel, with a soft limit at 80°. Skin motion is drawn at true scale unless you raise its own magnification. The jaw's effect really is that large: the chin rotates several degrees with every chewing stroke. Press <i>True scale</i> to see the unmagnified field. Hair glyphs are drawn lengthened for visibility (the factor is on screen); set <i>Hair glyph length</i> to 1× to see them at true length.</p>
 <p class="small">Values marked as estimates (follicle damping, grain angle, canopy coefficient, skin-to-bone attachment weights, wake fraction) are reasoned from the literature, not measured, and are all listed as constants at the top of the source.</p>
 `;
 
@@ -1406,7 +1411,7 @@ const DOC_HTML = `
 buildUI();
 figures=FIG_DEFS.map((d,i)=>makeFigure(d,i));
 setCondition(PRESETS.calm.p,'calm'); showExplain(PRESETS.calm.why);
-resize();
+resize(); updateHud(); updateReadout();
 requestAnimationFrame(frame);
 </script>
 </body>
