@@ -136,6 +136,9 @@ table.read td:last-child{text-align:right;font-weight:700}
   .legend{flex-wrap:wrap;gap:8px 14px}
 }
 </style>
+<!-- GoatCounter: privacy-friendly visitor count, no cookies -->
+<script data-goatcounter="https://hanjixu.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
 </head>
 <body>
 <header class="topbar">
@@ -1249,8 +1252,13 @@ function buildUI(){
   window.addEventListener('hashchange',route); route();
 }
 // two pages in one document, so the simulation and its state carry across
+// count the second view as its own path in GoatCounter (skipped if blocked or not loaded yet)
+function countView(slug, title) {
+  try { if (window.goatcounter && goatcounter.count) goatcounter.count({ path: location.pathname.replace(/index\.html$/, '').replace(/\/?$/, '/') + slug, title: title }); } catch (e) {}
+}
 function route(){
   const det=location.hash==='#details';
+  if(det) countView('details', 'Details');
   $('pageForecast').classList.toggle('on',!det); $('pageDetails').classList.toggle('on',det);
   $('navForecast').classList.toggle('on',!det); $('navDetails').classList.toggle('on',det);
   window.scrollTo(0,0); resize();
